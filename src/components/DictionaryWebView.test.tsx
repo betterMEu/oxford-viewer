@@ -1,16 +1,39 @@
-import { describe, expect, it, jest } from '@jest/globals';
+import {
+  beforeEach,
+  describe,
+  expect,
+  it,
+  jest,
+} from '@jest/globals';
 import { fireEvent, render } from '@testing-library/react-native';
 
 import { DictionaryWebView } from './DictionaryWebView';
 
-jest.mock('react-native-webview', () => ({
-  WebView: 'WebView',
-}));
+const mockInjectJavaScript = jest.fn();
+
+jest.mock('react-native-webview', () => {
+  const React = require('react');
+  const { View } = require('react-native');
+
+  class MockWebView extends React.Component {
+    injectJavaScript = mockInjectJavaScript;
+
+    render() {
+      return React.createElement(View, this.props);
+    }
+  }
+
+  return { WebView: MockWebView };
+});
 
 const DEFINITION_URL =
   'https://www.oxfordlearnersdictionaries.com/definition/english/abandon_1';
 
 describe('DictionaryWebView', () => {
+  beforeEach(() => {
+    mockInjectJavaScript.mockClear();
+  });
+
   it('loads the explicit Oxford definition URL', async () => {
     const screen = await render(<DictionaryWebView url={DEFINITION_URL} />);
 
@@ -36,6 +59,30 @@ describe('DictionaryWebView', () => {
     await fireEvent(webView, 'error');
 
     expect(screen.getByText('Unable to load Oxford page.')).toBeOnTheScreen();
+  });
+
+  it('scrolls to the dictionary entry after a successful load', async () => {
+    const screen = await render(<DictionaryWebView url={DEFINITION_URL} />);
+    const webView = screen.getByTestId('dictionary-webview');
+
+    await fireEvent(webView, 'loadStart');
+    await fireEvent(webView, 'loadEnd');
+
+    expect(mockInjectJavaScript).toHaveBeenCalledTimes(1);
+    expect(mockInjectJavaScript.mock.calls[0][0]).toContain(
+      "document.querySelector('#entryContent')",
+    );
+  });
+
+  it('does not auto-scroll when the definition load fails', async () => {
+    const screen = await render(<DictionaryWebView url={DEFINITION_URL} />);
+    const webView = screen.getByTestId('dictionary-webview');
+
+    await fireEvent(webView, 'loadStart');
+    await fireEvent(webView, 'error');
+    await fireEvent(webView, 'loadEnd');
+
+    expect(mockInjectJavaScript).not.toHaveBeenCalled();
   });
 
   it('clears an error without showing loading status on the next load', async () => {
