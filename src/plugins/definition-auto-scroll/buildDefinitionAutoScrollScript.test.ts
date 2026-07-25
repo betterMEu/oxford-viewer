@@ -4,6 +4,9 @@ import { buildDefinitionAutoScrollScript } from './buildDefinitionAutoScrollScri
 
 type ScrollTarget = {
   scrollIntoView: jest.Mock;
+  style: {
+    scrollMarginTop: string;
+  };
 };
 
 function runInjectedScript(
@@ -13,14 +16,16 @@ function runInjectedScript(
   windowValue: {
     addEventListener: jest.Mock;
     __oxfordDefinitionAutoScrollInstalled?: boolean;
+    __oxfordDefinitionPageScale?: number;
   },
   mutationObserverValue: jest.Mock,
+  topInset = 0,
 ) {
   const execute = new Function(
     'document',
     'window',
     'MutationObserver',
-    buildDefinitionAutoScrollScript(),
+    buildDefinitionAutoScrollScript(topInset),
   );
 
   execute(documentValue, windowValue, mutationObserverValue);
@@ -38,6 +43,9 @@ describe('buildDefinitionAutoScrollScript', () => {
   it('scrolls immediately when the entry is already available', () => {
     const target: ScrollTarget = {
       scrollIntoView: jest.fn(),
+      style: {
+        scrollMarginTop: '',
+      },
     };
     const documentValue = {
       querySelector: jest.fn(() => target),
@@ -58,12 +66,66 @@ describe('buildDefinitionAutoScrollScript', () => {
       block: 'start',
       behavior: 'auto',
     });
+    expect(target.style.scrollMarginTop).toBe('0px');
     expect(mutationObserverValue).not.toHaveBeenCalled();
+  });
+
+  it('keeps the title below the native top safe area', () => {
+    const target: ScrollTarget = {
+      scrollIntoView: jest.fn(),
+      style: {
+        scrollMarginTop: '',
+      },
+    };
+    const documentValue = {
+      querySelector: jest.fn(() => target),
+    };
+    const windowValue = {
+      addEventListener: jest.fn(),
+      __oxfordDefinitionPageScale: 1,
+    };
+
+    runInjectedScript(
+      documentValue,
+      windowValue,
+      jest.fn(),
+      47,
+    );
+
+    expect(target.style.scrollMarginTop).toBe('47px');
+  });
+
+  it('compensates the title margin for portrait page scaling', () => {
+    const target: ScrollTarget = {
+      scrollIntoView: jest.fn(),
+      style: {
+        scrollMarginTop: '',
+      },
+    };
+    const documentValue = {
+      querySelector: jest.fn(() => target),
+    };
+    const windowValue = {
+      addEventListener: jest.fn(),
+      __oxfordDefinitionPageScale: 0.625,
+    };
+
+    runInjectedScript(
+      documentValue,
+      windowValue,
+      jest.fn(),
+      47,
+    );
+
+    expect(target.style.scrollMarginTop).toBe('75.2px');
   });
 
   it('scrolls as soon as the entry is inserted into the DOM', () => {
     const target: ScrollTarget = {
       scrollIntoView: jest.fn(),
+      style: {
+        scrollMarginTop: '',
+      },
     };
     const documentValue = {
       querySelector: jest
@@ -112,8 +174,17 @@ describe('buildDefinitionAutoScrollScript', () => {
   });
 
   it('does not install the observer more than once per page', () => {
+    const target: ScrollTarget = {
+      scrollIntoView: jest.fn(),
+      style: {
+        scrollMarginTop: '',
+      },
+    };
     const documentValue = {
-      querySelector: jest.fn(() => null),
+      querySelector: jest
+        .fn()
+        .mockReturnValueOnce(null)
+        .mockReturnValue(target),
     };
     const windowValue = {
       addEventListener: jest.fn(),
@@ -137,6 +208,7 @@ describe('buildDefinitionAutoScrollScript', () => {
 
     expect(mutationObserverValue).toHaveBeenCalledTimes(1);
     expect(observer.observe).toHaveBeenCalledTimes(1);
+    expect(target.scrollIntoView).toHaveBeenCalledTimes(1);
   });
 
   it('ends with the WebView-compatible truthy expression', () => {

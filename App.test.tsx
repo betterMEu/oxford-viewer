@@ -5,6 +5,20 @@ import { StatusBar } from 'expo-status-bar';
 import App from './App';
 
 const mockInjectJavaScript = jest.fn();
+const mockUseWindowDimensions = jest.fn(() => ({
+  fontScale: 1,
+  height: 844,
+  scale: 3,
+  width: 390,
+}));
+
+jest.mock(
+  'react-native/Libraries/Utilities/useWindowDimensions',
+  () => ({
+    __esModule: true,
+    default: mockUseWindowDimensions,
+  }),
+);
 
 jest.mock('react-native-webview', () => {
   const React = require('react');
@@ -26,7 +40,15 @@ jest.mock('react-native-safe-area-context', () => {
     'react-native-safe-area-context/jest/mock',
   ) as { default: object };
 
-  return mock.default;
+  return {
+    ...mock.default,
+    useSafeAreaInsets: () => ({
+      bottom: 34,
+      left: 0,
+      right: 0,
+      top: 47,
+    }),
+  };
 });
 
 const fireFilterMessage = async (
@@ -45,6 +67,12 @@ const fireFilterMessage = async (
 describe('App', () => {
   beforeEach(() => {
     mockInjectJavaScript.mockClear();
+    mockUseWindowDimensions.mockReturnValue({
+      fontScale: 1,
+      height: 844,
+      scale: 3,
+      width: 390,
+    });
   });
 
   it('renders without the deprecated React Native SafeAreaView warning', async () => {
@@ -78,13 +106,41 @@ describe('App', () => {
     expect(screen.UNSAFE_getByType(StatusBar).props.hidden).toBe(true);
   });
 
-  it('does not adjust either Oxford page size', async () => {
+  it('configures portrait scaling only for the definition page', async () => {
     const screen = await render(<App />);
 
     expect(
       screen.getByTestId('dictionary-webview').props
         .injectedJavaScriptBeforeContentLoaded,
-    ).not.toContain('oxford-viewer-pane-width-fit');
+    ).toContain('oxford-viewer-definition-page-scale');
+    expect(
+      screen.getByTestId('dictionary-webview').props
+        .injectedJavaScriptBeforeContentLoaded,
+    ).toContain('var scale = 0.6788;');
+    expect(
+      screen.getByTestId('dictionary-webview').props
+        .injectedJavaScriptBeforeContentLoaded,
+    ).toContain('var topInset = 47;');
+    expect(
+      screen.getByTestId('oxford-word-list-webview').props
+        .injectedJavaScriptBeforeContentLoaded,
+    ).toBeUndefined();
+  });
+
+  it('uses Oxford native definition scale in landscape', async () => {
+    mockUseWindowDimensions.mockReturnValue({
+      fontScale: 1,
+      height: 390,
+      scale: 3,
+      width: 844,
+    });
+
+    const screen = await render(<App />);
+
+    expect(
+      screen.getByTestId('dictionary-webview').props
+        .injectedJavaScriptBeforeContentLoaded,
+    ).toContain('var scale = 1;');
     expect(
       screen.getByTestId('oxford-word-list-webview').props
         .injectedJavaScriptBeforeContentLoaded,

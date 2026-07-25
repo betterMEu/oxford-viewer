@@ -1,38 +1,75 @@
-import { useRef, useState } from 'react';
+import {
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { WebView } from 'react-native-webview';
 
 import {
   buildDefinitionAutoScrollScript,
 } from '../plugins/definition-auto-scroll/buildDefinitionAutoScrollScript';
+import {
+  buildDefinitionPageScaleScript,
+} from '../plugins/definition-page-scale/buildDefinitionPageScaleScript';
 
 type DictionaryWebViewProps = {
+  paneWidth: number;
+  shrinkToFit: boolean;
+  topInset: number;
   url: string;
 };
 
 type LoadState = 'idle' | 'error';
 
-export function DictionaryWebView({ url }: DictionaryWebViewProps) {
+export function DictionaryWebView({
+  paneWidth,
+  shrinkToFit,
+  topInset,
+  url,
+}: DictionaryWebViewProps) {
   const [loadState, setLoadState] = useState<LoadState>('idle');
   const webViewRef = useRef<WebView>(null);
   const hasErrorRef = useRef(false);
-  const definitionAutoScrollScript =
-    buildDefinitionAutoScrollScript();
+  const pageLoadedRef = useRef(false);
+  const definitionPageScript = useMemo(
+    () =>
+      [
+        buildDefinitionPageScaleScript(
+          paneWidth,
+          shrinkToFit,
+        ),
+        buildDefinitionAutoScrollScript(topInset),
+      ].join('\n'),
+    [paneWidth, shrinkToFit, topInset],
+  );
+
+  useEffect(() => {
+    if (pageLoadedRef.current && !hasErrorRef.current) {
+      webViewRef.current?.injectJavaScript(
+        definitionPageScript,
+      );
+    }
+  }, [definitionPageScript]);
 
   const handleLoadStart = () => {
     hasErrorRef.current = false;
+    pageLoadedRef.current = false;
     setLoadState('idle');
   };
 
   const handleError = () => {
     hasErrorRef.current = true;
+    pageLoadedRef.current = false;
     setLoadState('error');
   };
 
   const handleLoadEnd = () => {
     if (!hasErrorRef.current) {
+      pageLoadedRef.current = true;
       webViewRef.current?.injectJavaScript(
-        definitionAutoScrollScript,
+        definitionPageScript,
       );
     }
   };
@@ -43,7 +80,7 @@ export function DictionaryWebView({ url }: DictionaryWebViewProps) {
         ref={webViewRef}
         accessibilityLabel="Oxford dictionary definition page"
         injectedJavaScriptBeforeContentLoaded={
-          definitionAutoScrollScript
+          definitionPageScript
         }
         onError={handleError}
         onLoadEnd={handleLoadEnd}

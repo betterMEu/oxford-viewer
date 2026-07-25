@@ -70,6 +70,15 @@ target.scrollIntoView({
 Positioning `#entryContent` at the top skips Oxford's page header while
 preserving the word heading, phonetics, and native pronunciation controls.
 Positioning the first `.sense` instead would hide those useful entry controls.
+The app sets `scroll-margin-top` on `#entryContent` before alignment so the
+word heading remains below the iPhone top safe area. Because the definition
+page can be scaled in portrait, the CSS margin is calculated as:
+
+```text
+native top inset / active definition page scale
+```
+
+This preserves the same visual safe-area gap at every portrait scale.
 
 Oxford-controlled content can appear or reflow after the WebView's load event.
 A single script injected only after that event can therefore miss the earliest
@@ -104,9 +113,25 @@ body {
 }
 ```
 
-As of 2026-07-26, the app does not override these widths or apply CSS zoom.
-Both the definition page and word-list page use Oxford's native page sizing in
-portrait and landscape.
+As of 2026-07-26, only the definition page is automatically shrunk in portrait.
+The app preserves Oxford's 320 CSS-pixel layout and calculates:
+
+```text
+scale = min(1, native definition pane width / 320)
+body width = 100 / scale percent
+```
+
+It applies those values through a definition-only CSS `zoom` style. The
+reciprocal body width lets the complete 320-pixel layout fit in a narrower
+native pane, producing the page-wide shrink effect of a pinch-in gesture.
+If the script runs before the document root exists, it installs its own
+`MutationObserver` before the entry auto-scroll observer. The active scale is
+published only after the style is attached, so entry alignment cannot use a
+scale that is not yet visible.
+
+In landscape, the injected definition scale style is removed and the active
+scale is reset to `1`. The word-list WebView receives no sizing script and
+continues to use Oxford's native page sizing in both orientations.
 
 ## Risks
 
@@ -114,5 +139,8 @@ portrait and landscape.
   responsive layout, or page loading behavior without notice.
 - Late-loading advertising or other Oxford-controlled content can change page
   geometry after load.
+- CSS `zoom` is WebKit-specific and targets the iPhone WebView used by this
+  project.
 - The automated tests verify generated scripts and WebView integration; iPhone
-  Expo Go behavior still requires real-device acceptance testing.
+  Expo Go must still be used to confirm the exact visual scale and safe-area
+  alignment on a physical device.
