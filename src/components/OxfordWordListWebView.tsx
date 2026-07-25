@@ -1,4 +1,9 @@
-import { useEffect, useRef } from 'react';
+import {
+  forwardRef,
+  useEffect,
+  useImperativeHandle,
+  useRef,
+} from 'react';
 import { StyleSheet, View } from 'react-native';
 import {
   WebView,
@@ -10,6 +15,12 @@ import {
   buildWordListFilterScript,
   type WordListWebMessage,
 } from '../word-lists/buildWordListFilterScript';
+import {
+  buildAlphabetScrollScript,
+} from '../plugins/alphabet-index/buildAlphabetScrollScript';
+import type {
+  AlphabetLetter,
+} from '../plugins/alphabet-index/AlphabetIndexPlugin';
 import {
   CORE_WORD_LISTS,
   OXFORD_WORD_LIST_URL,
@@ -26,6 +37,10 @@ type OxfordWordListWebViewProps = {
   onLoadStateChange?: (state: WordListLoadState) => void;
   onDefinitionSelected: (url: string) => void;
   onFilterResult: (result: WordListWebMessage) => void;
+};
+
+export type OxfordWordListWebViewHandle = {
+  scrollToLetter: (letter: AlphabetLetter) => void;
 };
 
 const OXFORD_DEFINITION_URL_PREFIX =
@@ -71,12 +86,18 @@ function parseWordListMessage(data: string): WordListWebMessage | null {
   return null;
 }
 
-export function OxfordWordListWebView({
-  selectedList,
-  onLoadStateChange,
-  onDefinitionSelected,
-  onFilterResult,
-}: OxfordWordListWebViewProps) {
+export const OxfordWordListWebView = forwardRef<
+  OxfordWordListWebViewHandle,
+  OxfordWordListWebViewProps
+>(function OxfordWordListWebView(
+  {
+    selectedList,
+    onLoadStateChange,
+    onDefinitionSelected,
+    onFilterResult,
+  },
+  ref,
+) {
   const webViewRef = useRef<WebView>(null);
   const isLoadedRef = useRef(false);
   const hasErrorRef = useRef(false);
@@ -89,6 +110,16 @@ export function OxfordWordListWebView({
       buildWordListFilterScript(wordListId),
     );
   };
+
+  useImperativeHandle(ref, () => ({
+    scrollToLetter: (letter) => {
+      if (isLoadedRef.current) {
+        webViewRef.current?.injectJavaScript(
+          buildAlphabetScrollScript(letter),
+        );
+      }
+    },
+  }));
 
   useEffect(() => {
     if (isLoadedRef.current) {
@@ -162,7 +193,7 @@ export function OxfordWordListWebView({
       />
     </View>
   );
-}
+});
 
 const styles = StyleSheet.create({
   container: {

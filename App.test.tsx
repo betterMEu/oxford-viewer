@@ -76,6 +76,30 @@ describe('App', () => {
     ).toBeNull();
   });
 
+  it('enables the alphabet index after filtering and scrolls to a letter', async () => {
+    const screen = await render(<App />);
+    const webView = screen.getByTestId('oxford-word-list-webview');
+    const bButton = screen.getByRole('button', { name: 'B' });
+
+    expect(bButton).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'X' })).toBeDisabled();
+
+    await fireEvent(webView, 'loadEnd');
+    await fireFilterMessage(webView, {
+      type: 'WORD_LIST_FILTER_APPLIED',
+      wordListId: 'ox3000',
+    });
+
+    expect(bButton).not.toBeDisabled();
+    mockInjectJavaScript.mockClear();
+    await fireEvent.press(bButton);
+
+    expect(mockInjectJavaScript).toHaveBeenCalledTimes(1);
+    expect(mockInjectJavaScript.mock.calls[0][0]).toContain(
+      "var requestedLetter = 'B';",
+    );
+  });
+
   it('routes a top-level definition link to the right WebView', async () => {
     const screen = await render(<App />);
     const definitionUrl =

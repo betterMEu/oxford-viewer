@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import {
@@ -7,7 +7,14 @@ import {
 } from 'react-native-safe-area-context';
 
 import { DictionaryWebView } from './src/components/DictionaryWebView';
-import { OxfordWordListWebView } from './src/components/OxfordWordListWebView';
+import {
+  OxfordWordListWebView,
+  type OxfordWordListWebViewHandle,
+} from './src/components/OxfordWordListWebView';
+import {
+  AlphabetIndexPlugin,
+  type AlphabetLetter,
+} from './src/plugins/alphabet-index/AlphabetIndexPlugin';
 import type { WordListWebMessage } from './src/word-lists/buildWordListFilterScript';
 import { DEFAULT_CORE_WORD_LIST } from './src/word-lists/coreWordLists';
 
@@ -15,17 +22,33 @@ const INITIAL_DEFINITION_URL =
   'https://www.oxfordlearnersdictionaries.com/definition/english/a_1';
 
 export default function App() {
+  const wordListWebViewRef = useRef<OxfordWordListWebViewHandle>(null);
   const [selectedDefinitionUrl, setSelectedDefinitionUrl] = useState(
     INITIAL_DEFINITION_URL,
   );
   const [filterError, setFilterError] = useState(false);
+  const [wordListReady, setWordListReady] = useState(false);
 
   const handleFilterResult = (result: WordListWebMessage) => {
     if (result.wordListId !== DEFAULT_CORE_WORD_LIST) {
       return;
     }
 
-    setFilterError(result.type === 'WORD_LIST_FILTER_FAILED');
+    const failed = result.type === 'WORD_LIST_FILTER_FAILED';
+    setFilterError(failed);
+    setWordListReady(!failed);
+  };
+
+  const handleWordListLoadStateChange = (
+    state: 'idle' | 'loading' | 'loaded' | 'error',
+  ) => {
+    if (state === 'loading' || state === 'error') {
+      setWordListReady(false);
+    }
+  };
+
+  const handleLetterSelected = (letter: AlphabetLetter) => {
+    wordListWebViewRef.current?.scrollToLetter(letter);
   };
 
   return (
@@ -43,11 +66,17 @@ export default function App() {
               </Text>
             )}
             <OxfordWordListWebView
+              ref={wordListWebViewRef}
               onDefinitionSelected={setSelectedDefinitionUrl}
               onFilterResult={handleFilterResult}
+              onLoadStateChange={handleWordListLoadStateChange}
               selectedList={DEFAULT_CORE_WORD_LIST}
             />
           </View>
+          <AlphabetIndexPlugin
+            disabled={!wordListReady}
+            onSelectLetter={handleLetterSelected}
+          />
           <View style={styles.dictionaryPane}>
             <DictionaryWebView url={selectedDefinitionUrl} />
           </View>

@@ -1,8 +1,12 @@
 import { beforeEach, describe, expect, it, jest } from '@jest/globals';
-import { fireEvent, render } from '@testing-library/react-native';
+import { createRef } from 'react';
+import { act, fireEvent, render } from '@testing-library/react-native';
 
 import { OXFORD_WORD_LIST_URL } from '../word-lists/coreWordLists';
-import { OxfordWordListWebView } from './OxfordWordListWebView';
+import {
+  OxfordWordListWebView,
+  type OxfordWordListWebViewHandle,
+} from './OxfordWordListWebView';
 
 const mockInjectJavaScript = jest.fn();
 
@@ -73,6 +77,32 @@ describe('OxfordWordListWebView', () => {
     expect(mockInjectJavaScript).toHaveBeenCalledTimes(1);
     expect(mockInjectJavaScript.mock.calls[0][0]).toContain(
       "var wordListId = 'ox3000';",
+    );
+  });
+
+  it('scrolls to a requested letter only after the word list loads', async () => {
+    const ref = createRef<OxfordWordListWebViewHandle>();
+    const screen = await render(
+      <OxfordWordListWebView
+        ref={ref}
+        selectedList="ox3000"
+        {...createProps()}
+      />,
+    );
+
+    await act(() => ref.current?.scrollToLetter('B'));
+    expect(mockInjectJavaScript).not.toHaveBeenCalled();
+
+    await fireEvent(
+      screen.getByTestId('oxford-word-list-webview'),
+      'loadEnd',
+    );
+    mockInjectJavaScript.mockClear();
+    await act(() => ref.current?.scrollToLetter('B'));
+
+    expect(mockInjectJavaScript).toHaveBeenCalledTimes(1);
+    expect(mockInjectJavaScript.mock.calls[0][0]).toContain(
+      "var requestedLetter = 'B';",
     );
   });
 
