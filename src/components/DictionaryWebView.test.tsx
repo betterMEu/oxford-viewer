@@ -85,6 +85,38 @@ describe('DictionaryWebView', () => {
     );
   });
 
+  it('installs pane-width fitting before content loads', async () => {
+    const screen = await render(
+      <DictionaryWebView fitToWidth url={DEFINITION_URL} />,
+    );
+
+    expect(screen.getByTestId('dictionary-webview')).toHaveProp(
+      'injectedJavaScriptBeforeContentLoaded',
+      expect.stringContaining('oxford-viewer-pane-width-fit'),
+    );
+  });
+
+  it('updates pane-width fitting after orientation changes', async () => {
+    const screen = await render(
+      <DictionaryWebView fitToWidth url={DEFINITION_URL} />,
+    );
+    const webView = screen.getByTestId('dictionary-webview');
+    await fireEvent(webView, 'loadEnd');
+    mockInjectJavaScript.mockClear();
+
+    await screen.rerender(
+      <DictionaryWebView fitToWidth={false} url={DEFINITION_URL} />,
+    );
+
+    expect(mockInjectJavaScript).toHaveBeenCalledTimes(1);
+    expect(mockInjectJavaScript.mock.calls[0][0]).toContain(
+      'oxford-viewer-pane-width-fit',
+    );
+    expect(mockInjectJavaScript.mock.calls[0][0]).toContain(
+      'if (!false)',
+    );
+  });
+
   it('does not auto-scroll when the definition load fails', async () => {
     const screen = await render(<DictionaryWebView url={DEFINITION_URL} />);
     const webView = screen.getByTestId('dictionary-webview');

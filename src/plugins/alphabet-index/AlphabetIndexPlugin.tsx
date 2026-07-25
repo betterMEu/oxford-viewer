@@ -32,16 +32,29 @@ export const ALPHABET = [
 export type AlphabetLetter = (typeof ALPHABET)[number];
 
 type AlphabetIndexPluginProps = {
+  bottomInset?: number;
   disabled: boolean;
   onSelectLetter: (letter: AlphabetLetter) => void;
+  topInset?: number;
 };
 
 export function AlphabetIndexPlugin({
+  bottomInset = 0,
   disabled,
   onSelectLetter,
+  topInset = 0,
 }: AlphabetIndexPluginProps) {
   return (
-    <View accessibilityLabel="Alphabet index" style={styles.container}>
+    <View
+      accessibilityLabel="Alphabet index"
+      style={[
+        styles.container,
+        {
+          paddingBottom: bottomInset + 2,
+          paddingTop: topInset + 2,
+        },
+      ]}
+    >
       {ALPHABET.map((letter) => {
         const letterDisabled = disabled || letter === 'X';
 
@@ -74,7 +87,6 @@ const styles = StyleSheet.create({
     borderLeftWidth: StyleSheet.hairlineWidth,
     borderRightColor: '#cbd5e1',
     borderRightWidth: StyleSheet.hairlineWidth,
-    paddingVertical: 2,
     width: 28,
   },
   letterButton: {

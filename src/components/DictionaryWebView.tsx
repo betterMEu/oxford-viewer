@@ -1,38 +1,59 @@
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { WebView } from 'react-native-webview';
 
 import {
   buildDefinitionAutoScrollScript,
 } from '../plugins/definition-auto-scroll/buildDefinitionAutoScrollScript';
+import {
+  buildPaneWidthFitScript,
+} from '../plugins/pane-width-fit/buildPaneWidthFitScript';
 
 type DictionaryWebViewProps = {
+  fitToWidth?: boolean;
   url: string;
 };
 
 type LoadState = 'idle' | 'error';
 
-export function DictionaryWebView({ url }: DictionaryWebViewProps) {
+export function DictionaryWebView({
+  fitToWidth = false,
+  url,
+}: DictionaryWebViewProps) {
   const [loadState, setLoadState] = useState<LoadState>('idle');
   const webViewRef = useRef<WebView>(null);
   const hasErrorRef = useRef(false);
+  const isLoadedRef = useRef(false);
   const definitionAutoScrollScript =
     buildDefinitionAutoScrollScript();
+  const paneWidthFitScript =
+    buildPaneWidthFitScript(fitToWidth);
+  const beforeContentLoadedScript =
+    `${paneWidthFitScript}\n${definitionAutoScrollScript}`;
+
+  useEffect(() => {
+    if (isLoadedRef.current) {
+      webViewRef.current?.injectJavaScript(paneWidthFitScript);
+    }
+  }, [paneWidthFitScript]);
 
   const handleLoadStart = () => {
     hasErrorRef.current = false;
+    isLoadedRef.current = false;
     setLoadState('idle');
   };
 
   const handleError = () => {
     hasErrorRef.current = true;
+    isLoadedRef.current = false;
     setLoadState('error');
   };
 
   const handleLoadEnd = () => {
     if (!hasErrorRef.current) {
+      isLoadedRef.current = true;
       webViewRef.current?.injectJavaScript(
-        definitionAutoScrollScript,
+        beforeContentLoadedScript,
       );
     }
   };
@@ -43,7 +64,7 @@ export function DictionaryWebView({ url }: DictionaryWebViewProps) {
         ref={webViewRef}
         accessibilityLabel="Oxford dictionary definition page"
         injectedJavaScriptBeforeContentLoaded={
-          definitionAutoScrollScript
+          beforeContentLoadedScript
         }
         onError={handleError}
         onLoadEnd={handleLoadEnd}

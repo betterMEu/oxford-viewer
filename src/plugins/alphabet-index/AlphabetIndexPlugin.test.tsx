@@ -14,6 +14,22 @@ describe('AlphabetIndexPlugin', () => {
     expect(screen.getByRole('button', { name: 'Z' })).toBeOnTheScreen();
   });
 
+  it('keeps letters inside the supplied vertical safe insets', async () => {
+    const screen = await render(
+      <AlphabetIndexPlugin
+        bottomInset={34}
+        disabled={false}
+        onSelectLetter={jest.fn()}
+        topInset={59}
+      />,
+    );
+
+    expect(screen.getByLabelText('Alphabet index')).toHaveStyle({
+      paddingBottom: 36,
+      paddingTop: 61,
+    });
+  });
+
   it('reports the selected letter', async () => {
     const onSelectLetter = jest.fn();
     const screen = await render(

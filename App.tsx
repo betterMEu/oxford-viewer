@@ -1,9 +1,15 @@
 import { useRef, useState } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import {
+  StyleSheet,
+  Text,
+  useWindowDimensions,
+  View,
+} from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import {
   SafeAreaProvider,
   SafeAreaView,
+  useSafeAreaInsets,
 } from 'react-native-safe-area-context';
 
 import { DictionaryWebView } from './src/components/DictionaryWebView';
@@ -15,6 +21,7 @@ import {
   AlphabetIndexPlugin,
   type AlphabetLetter,
 } from './src/plugins/alphabet-index/AlphabetIndexPlugin';
+import { getPaneWidthFitMode } from './src/layout/getPaneWidthFitMode';
 import type { WordListWebMessage } from './src/word-lists/buildWordListFilterScript';
 import { DEFAULT_CORE_WORD_LIST } from './src/word-lists/coreWordLists';
 
@@ -22,6 +29,18 @@ const INITIAL_DEFINITION_URL =
   'https://www.oxfordlearnersdictionaries.com/definition/english/a_1';
 
 export default function App() {
+  return (
+    <SafeAreaProvider style={styles.provider}>
+      <AppContent />
+    </SafeAreaProvider>
+  );
+}
+
+function AppContent() {
+  const { height, width } = useWindowDimensions();
+  const { bottom, top } = useSafeAreaInsets();
+  const { fitDictionary, fitWordList } =
+    getPaneWidthFitMode(width, height);
   const wordListWebViewRef = useRef<OxfordWordListWebViewHandle>(null);
   const [selectedDefinitionUrl, setSelectedDefinitionUrl] = useState(
     INITIAL_DEFINITION_URL,
@@ -52,37 +71,42 @@ export default function App() {
   };
 
   return (
-    <SafeAreaProvider style={styles.provider}>
-      <SafeAreaView
-        edges={['top', 'right', 'bottom', 'left']}
-        style={styles.safeArea}
-      >
-        <StatusBar style="dark" />
-        <View style={styles.splitPane}>
-          <View style={styles.wordPane}>
-            {filterError && (
-              <Text accessibilityRole="alert" style={styles.filterError}>
-                无法显示 Oxford 3000，Oxford 页面结构可能已变化。
-              </Text>
-            )}
-            <OxfordWordListWebView
-              ref={wordListWebViewRef}
-              onDefinitionSelected={setSelectedDefinitionUrl}
-              onFilterResult={handleFilterResult}
-              onLoadStateChange={handleWordListLoadStateChange}
-              selectedList={DEFAULT_CORE_WORD_LIST}
-            />
-          </View>
-          <AlphabetIndexPlugin
-            disabled={!wordListReady}
-            onSelectLetter={handleLetterSelected}
+    <SafeAreaView
+      edges={['left', 'right']}
+      style={styles.safeArea}
+      testID="app-safe-area"
+    >
+      <StatusBar style="dark" />
+      <View style={styles.splitPane}>
+        <View style={styles.wordPane}>
+          {filterError && (
+            <Text accessibilityRole="alert" style={styles.filterError}>
+              无法显示 Oxford 3000，Oxford 页面结构可能已变化。
+            </Text>
+          )}
+          <OxfordWordListWebView
+            ref={wordListWebViewRef}
+            fitToWidth={fitWordList}
+            onDefinitionSelected={setSelectedDefinitionUrl}
+            onFilterResult={handleFilterResult}
+            onLoadStateChange={handleWordListLoadStateChange}
+            selectedList={DEFAULT_CORE_WORD_LIST}
           />
-          <View style={styles.dictionaryPane}>
-            <DictionaryWebView url={selectedDefinitionUrl} />
-          </View>
         </View>
-      </SafeAreaView>
-    </SafeAreaProvider>
+        <AlphabetIndexPlugin
+          bottomInset={bottom}
+          disabled={!wordListReady}
+          onSelectLetter={handleLetterSelected}
+          topInset={top}
+        />
+        <View style={styles.dictionaryPane}>
+          <DictionaryWebView
+            fitToWidth={fitDictionary}
+            url={selectedDefinitionUrl}
+          />
+        </View>
+      </View>
+    </SafeAreaView>
   );
 }
 

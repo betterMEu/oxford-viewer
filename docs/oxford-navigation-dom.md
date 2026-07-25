@@ -79,6 +79,36 @@ that element is inserted, then disconnects the observer. The page load event
 and WebView load-end injection remain immediate fallbacks; there are no fixed
 retry delays.
 
+## Split-pane width
+
+Both investigated Oxford pages declare a mobile viewport:
+
+```html
+<meta name="viewport" content="width=device-width, initial-scale=1">
+```
+
+Oxford's current styles still impose widths that can exceed an iPhone split
+pane:
+
+```css
+body {
+  min-width: 320px;
+}
+
+.responsive_container {
+  min-width: 320px;
+}
+
+.responsive_row {
+  min-width: 300px;
+}
+```
+
+The app's pane-width plugin overrides these verified minimum widths and
+constrains the responsive containers to the WebView width. It is enabled for
+the definition pane in portrait and the word-list pane in landscape. Rotation
+updates the injected style without reloading either Oxford page.
+
 ## Risks
 
 - Oxford can change `data-hw`, `data-ox3000`, `#entryContent`, ordering,

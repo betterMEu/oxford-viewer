@@ -60,6 +60,30 @@ describe('App', () => {
     }
   });
 
+  it('fills the top and bottom screen edges', async () => {
+    const screen = await render(<App />);
+
+    expect(screen.getByTestId('app-safe-area')).toHaveProp('edges', {
+      bottom: 'off',
+      left: 'additive',
+      right: 'additive',
+      top: 'off',
+    });
+  });
+
+  it('fits the definition pane in the default portrait viewport', async () => {
+    const screen = await render(<App />);
+
+    expect(
+      screen.getByTestId('dictionary-webview').props
+        .injectedJavaScriptBeforeContentLoaded,
+    ).toContain('if (!true)');
+    expect(
+      screen.getByTestId('oxford-word-list-webview').props
+        .injectedJavaScriptBeforeContentLoaded,
+    ).toContain('if (!false)');
+  });
+
   it('does not render core word list switching buttons', async () => {
     const screen = await render(<App />);
 
