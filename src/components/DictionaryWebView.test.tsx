@@ -1,5 +1,5 @@
 import { describe, expect, it, jest } from '@jest/globals';
-import { render } from '@testing-library/react-native';
+import { fireEvent, render } from '@testing-library/react-native';
 
 import { WORDS } from '../data/words';
 import { DictionaryWebView } from './DictionaryWebView';
@@ -15,5 +15,29 @@ describe('DictionaryWebView', () => {
     expect(screen.getByTestId('dictionary-webview')).toHaveProp('source', {
       uri: WORDS[1].oxfordUrl,
     });
+  });
+
+  it('shows loading on load start and clears it on load end', async () => {
+    const screen = await render(<DictionaryWebView word={WORDS[1]} />);
+    const webView = screen.getByTestId('dictionary-webview');
+
+    expect(screen.queryByText('Loading Oxford page…')).toBeNull();
+
+    await fireEvent(webView, 'loadStart');
+    expect(screen.getByText('Loading Oxford page…')).toBeOnTheScreen();
+
+    await fireEvent(webView, 'loadEnd');
+    expect(screen.queryByText('Loading Oxford page…')).toBeNull();
+  });
+
+  it('shows a concise error when the WebView fails', async () => {
+    const screen = await render(<DictionaryWebView word={WORDS[1]} />);
+    const webView = screen.getByTestId('dictionary-webview');
+
+    await fireEvent(webView, 'loadStart');
+    await fireEvent(webView, 'error');
+    await fireEvent(webView, 'loadEnd');
+
+    expect(screen.getByText('Unable to load Oxford page.')).toBeOnTheScreen();
   });
 });

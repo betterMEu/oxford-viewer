@@ -20,7 +20,7 @@ describe('WordList', () => {
     expect(onSelectWord).toHaveBeenCalledWith(WORDS[2]);
   });
 
-  it('keeps UK and US buttons clickable without selecting a word', async () => {
+  it('disables UK and US buttons without selecting a word', async () => {
     const onSelectWord = jest.fn();
     const screen = await render(
       <WordList
@@ -30,12 +30,20 @@ describe('WordList', () => {
       />,
     );
 
-    await fireEvent.press(
-      screen.getByLabelText('UK pronunciation placeholder for example'),
+    const ukButton = screen.getByLabelText(
+      'UK pronunciation unavailable for example',
     );
-    await fireEvent.press(
-      screen.getByLabelText('US pronunciation placeholder for example'),
+    const usButton = screen.getByLabelText(
+      'US pronunciation unavailable for example',
     );
+
+    expect(ukButton).toBeDisabled();
+    expect(ukButton).toHaveProp('accessibilityState', { disabled: true });
+    expect(usButton).toBeDisabled();
+    expect(usButton).toHaveProp('accessibilityState', { disabled: true });
+
+    await fireEvent.press(ukButton);
+    await fireEvent.press(usButton);
 
     expect(onSelectWord).not.toHaveBeenCalled();
   });

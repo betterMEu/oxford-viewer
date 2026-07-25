@@ -8,8 +8,6 @@ type WordRowProps = {
   onSelect: (word: Word) => void;
 };
 
-const doNothing = () => undefined;
-
 export function WordRow({ word, isSelected, onSelect }: WordRowProps) {
   return (
     <View style={[styles.row, isSelected && styles.selectedRow]}>
@@ -23,20 +21,28 @@ export function WordRow({ word, isSelected, onSelect }: WordRowProps) {
         </Text>
       </Pressable>
       <Pressable
-        accessibilityLabel={`UK pronunciation placeholder for ${word.word}`}
+        accessibilityLabel={`UK pronunciation unavailable for ${word.word}`}
         accessibilityRole="button"
-        onPress={doNothing}
-        style={styles.accentButton}
+        accessibilityState={{ disabled: true }}
+        disabled
+        style={[
+          styles.pronunciationButton,
+          styles.disabledPronunciationButton,
+        ]}
       >
-        <Text style={styles.accentButtonText}>UK</Text>
+        <Text style={styles.disabledPronunciationButtonText}>UK</Text>
       </Pressable>
       <Pressable
-        accessibilityLabel={`US pronunciation placeholder for ${word.word}`}
+        accessibilityLabel={`US pronunciation unavailable for ${word.word}`}
         accessibilityRole="button"
-        onPress={doNothing}
-        style={styles.accentButton}
+        accessibilityState={{ disabled: true }}
+        disabled
+        style={[
+          styles.pronunciationButton,
+          styles.disabledPronunciationButton,
+        ]}
       >
-        <Text style={styles.accentButtonText}>US</Text>
+        <Text style={styles.disabledPronunciationButtonText}>US</Text>
       </Pressable>
     </View>
   );
@@ -65,16 +71,20 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
   },
-  accentButton: {
+  pronunciationButton: {
     alignItems: 'center',
-    backgroundColor: '#0b5cab',
     borderRadius: 6,
     justifyContent: 'center',
     minHeight: 36,
     minWidth: 36,
   },
-  accentButtonText: {
-    color: '#ffffff',
+  disabledPronunciationButton: {
+    backgroundColor: '#e1e5ea',
+    borderColor: '#c3c9d0',
+    borderWidth: 1,
+  },
+  disabledPronunciationButtonText: {
+    color: '#6b7280',
     fontSize: 12,
     fontWeight: '700',
   },

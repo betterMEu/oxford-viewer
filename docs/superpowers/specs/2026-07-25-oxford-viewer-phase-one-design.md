@@ -71,4 +71,3 @@ type Word = {
 - 通过组件测试验证 UK、US 按钮可点击但不触发选词。
 - 运行 TypeScript：`npx tsc --noEmit`。
 - 运行 Expo 项目检查：`npx expo-doctor`。
-
