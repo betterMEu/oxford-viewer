@@ -72,10 +72,12 @@ preserving the word heading, phonetics, and native pronunciation controls.
 Positioning the first `.sense` instead would hide those useful entry controls.
 
 Oxford-controlled content can appear or reflow after the WebView's load event.
-A single immediate scroll can therefore be overwritten or run before the
-target is available. The injected script performs the same lookup immediately
-and again after 250ms, 750ms, and 1500ms. The retries are bounded so they do not
-continue interfering with normal reading.
+A single script injected only after that event can therefore miss the earliest
+usable moment. The WebView now installs one `MutationObserver` before content
+loads. It scrolls immediately if `#entryContent` already exists, or as soon as
+that element is inserted, then disconnects the observer. The page load event
+and WebView load-end injection remain immediate fallbacks; there are no fixed
+retry delays.
 
 ## Risks
 

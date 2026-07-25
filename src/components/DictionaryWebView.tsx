@@ -16,6 +16,8 @@ export function DictionaryWebView({ url }: DictionaryWebViewProps) {
   const [loadState, setLoadState] = useState<LoadState>('idle');
   const webViewRef = useRef<WebView>(null);
   const hasErrorRef = useRef(false);
+  const definitionAutoScrollScript =
+    buildDefinitionAutoScrollScript();
 
   const handleLoadStart = () => {
     hasErrorRef.current = false;
@@ -30,7 +32,7 @@ export function DictionaryWebView({ url }: DictionaryWebViewProps) {
   const handleLoadEnd = () => {
     if (!hasErrorRef.current) {
       webViewRef.current?.injectJavaScript(
-        buildDefinitionAutoScrollScript(),
+        definitionAutoScrollScript,
       );
     }
   };
@@ -40,6 +42,9 @@ export function DictionaryWebView({ url }: DictionaryWebViewProps) {
       <WebView
         ref={webViewRef}
         accessibilityLabel="Oxford dictionary definition page"
+        injectedJavaScriptBeforeContentLoaded={
+          definitionAutoScrollScript
+        }
         onError={handleError}
         onLoadEnd={handleLoadEnd}
         onLoadStart={handleLoadStart}

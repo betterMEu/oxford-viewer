@@ -10,15 +10,20 @@ function runInjectedScript(
   documentValue: {
     querySelector: jest.Mock;
   },
-  setTimeoutValue: jest.Mock,
+  windowValue: {
+    addEventListener: jest.Mock;
+    __oxfordDefinitionAutoScrollInstalled?: boolean;
+  },
+  mutationObserverValue: jest.Mock,
 ) {
   const execute = new Function(
     'document',
-    'setTimeout',
+    'window',
+    'MutationObserver',
     buildDefinitionAutoScrollScript(),
   );
 
-  execute(documentValue, setTimeoutValue);
+  execute(documentValue, windowValue, mutationObserverValue);
 }
 
 describe('buildDefinitionAutoScrollScript', () => {
@@ -30,80 +35,108 @@ describe('buildDefinitionAutoScrollScript', () => {
     );
   });
 
-  it('scrolls the entry into view immediately and after bounded delays', () => {
+  it('scrolls immediately when the entry is already available', () => {
     const target: ScrollTarget = {
       scrollIntoView: jest.fn(),
     };
-    const scheduledCallbacks: Array<() => void> = [];
-    const setTimeoutValue = jest.fn(
-      (callback: () => void, _delay: number) => {
-        scheduledCallbacks.push(callback);
-      },
-    );
     const documentValue = {
       querySelector: jest.fn(() => target),
     };
+    const windowValue = {
+      addEventListener: jest.fn(),
+    };
+    const mutationObserverValue = jest.fn();
 
-    runInjectedScript(documentValue, setTimeoutValue);
+    runInjectedScript(
+      documentValue,
+      windowValue,
+      mutationObserverValue,
+    );
 
     expect(target.scrollIntoView).toHaveBeenCalledTimes(1);
-    expect(setTimeoutValue.mock.calls.map((call) => call[1])).toEqual([
-      250,
-      750,
-      1500,
-    ]);
-
-    scheduledCallbacks.forEach((callback) => callback());
-
-    expect(target.scrollIntoView).toHaveBeenCalledTimes(4);
     expect(target.scrollIntoView).toHaveBeenLastCalledWith({
       block: 'start',
       behavior: 'auto',
     });
+    expect(mutationObserverValue).not.toHaveBeenCalled();
   });
 
-  it('can find the entry after the initial load callback', () => {
+  it('scrolls as soon as the entry is inserted into the DOM', () => {
     const target: ScrollTarget = {
       scrollIntoView: jest.fn(),
     };
-    const scheduledCallbacks: Array<() => void> = [];
-    const setTimeoutValue = jest.fn(
-      (callback: () => void, _delay: number) => {
-        scheduledCallbacks.push(callback);
-      },
-    );
     const documentValue = {
       querySelector: jest
         .fn()
         .mockReturnValueOnce(null)
         .mockReturnValue(target),
     };
-
-    runInjectedScript(documentValue, setTimeoutValue);
-
-    expect(target.scrollIntoView).not.toHaveBeenCalled();
-
-    scheduledCallbacks.forEach((callback) => callback());
-
-    expect(target.scrollIntoView).toHaveBeenCalledTimes(3);
-  });
-
-  it('does not scroll when the entry container remains absent', () => {
-    const scheduledCallbacks: Array<() => void> = [];
-    const setTimeoutValue = jest.fn(
-      (callback: () => void, _delay: number) => {
-        scheduledCallbacks.push(callback);
+    const windowValue = {
+      addEventListener: jest.fn(),
+    };
+    const observer = {
+      disconnect: jest.fn(),
+      observe: jest.fn(),
+    };
+    let observerCallback: (() => void) | undefined;
+    const mutationObserverValue = jest.fn(
+      (callback: () => void) => {
+        observerCallback = callback;
+        return observer;
       },
     );
+
+    runInjectedScript(
+      documentValue,
+      windowValue,
+      mutationObserverValue,
+    );
+
+    expect(target.scrollIntoView).not.toHaveBeenCalled();
+    expect(observer.observe).toHaveBeenCalledWith(documentValue, {
+      childList: true,
+      subtree: true,
+    });
+
+    observerCallback?.();
+
+    expect(target.scrollIntoView).toHaveBeenCalledTimes(1);
+    expect(observer.disconnect).toHaveBeenCalledTimes(1);
+  });
+
+  it('does not use fixed retry delays', () => {
+    const script = buildDefinitionAutoScrollScript();
+
+    expect(script).not.toContain('setTimeout');
+    expect(script).not.toMatch(/\b(250|750|1500)\b/);
+  });
+
+  it('does not install the observer more than once per page', () => {
     const documentValue = {
       querySelector: jest.fn(() => null),
     };
+    const windowValue = {
+      addEventListener: jest.fn(),
+    };
+    const observer = {
+      disconnect: jest.fn(),
+      observe: jest.fn(),
+    };
+    const mutationObserverValue = jest.fn(() => observer);
 
-    runInjectedScript(documentValue, setTimeoutValue);
-    scheduledCallbacks.forEach((callback) => callback());
+    runInjectedScript(
+      documentValue,
+      windowValue,
+      mutationObserverValue,
+    );
+    runInjectedScript(
+      documentValue,
+      windowValue,
+      mutationObserverValue,
+    );
 
-    expect(documentValue.querySelector).toHaveBeenCalledTimes(4);
-    expect(setTimeoutValue).toHaveBeenCalledTimes(3);
+    expect(mutationObserverValue).toHaveBeenCalledTimes(1);
+    expect(observer.observe).toHaveBeenCalledTimes(1);
   });
 
   it('ends with the WebView-compatible truthy expression', () => {

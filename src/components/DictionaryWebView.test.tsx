@@ -74,6 +74,17 @@ describe('DictionaryWebView', () => {
     );
   });
 
+  it('installs auto-scroll before the definition content is loaded', async () => {
+    const screen = await render(<DictionaryWebView url={DEFINITION_URL} />);
+
+    expect(screen.getByTestId('dictionary-webview')).toHaveProp(
+      'injectedJavaScriptBeforeContentLoaded',
+      expect.stringContaining(
+        "document.querySelector('#entryContent')",
+      ),
+    );
+  });
+
   it('does not auto-scroll when the definition load fails', async () => {
     const screen = await render(<DictionaryWebView url={DEFINITION_URL} />);
     const webView = screen.getByTestId('dictionary-webview');
