@@ -78,17 +78,17 @@ describe('App', () => {
     expect(screen.UNSAFE_getByType(StatusBar).props.hidden).toBe(true);
   });
 
-  it('fits the definition pane in the default portrait viewport', async () => {
+  it('does not adjust either Oxford page size', async () => {
     const screen = await render(<App />);
 
     expect(
       screen.getByTestId('dictionary-webview').props
         .injectedJavaScriptBeforeContentLoaded,
-    ).toContain('if (!true)');
+    ).not.toContain('oxford-viewer-pane-width-fit');
     expect(
       screen.getByTestId('oxford-word-list-webview').props
         .injectedJavaScriptBeforeContentLoaded,
-    ).toContain('if (!false)');
+    ).toBeUndefined();
   });
 
   it('does not render core word list switching buttons', async () => {

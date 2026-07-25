@@ -18,9 +18,6 @@ import {
 import {
   buildAlphabetScrollScript,
 } from '../plugins/alphabet-index/buildAlphabetScrollScript';
-import {
-  buildPaneWidthFitScript,
-} from '../plugins/pane-width-fit/buildPaneWidthFitScript';
 import type {
   AlphabetLetter,
 } from '../plugins/alphabet-index/AlphabetIndexPlugin';
@@ -36,7 +33,6 @@ type ShouldStartLoadRequest = Parameters<
 >[0];
 
 type OxfordWordListWebViewProps = {
-  fitToWidth?: boolean;
   selectedList: CoreWordListId;
   onLoadStateChange?: (state: WordListLoadState) => void;
   onDefinitionSelected: (url: string) => void;
@@ -95,7 +91,6 @@ export const OxfordWordListWebView = forwardRef<
   OxfordWordListWebViewProps
 >(function OxfordWordListWebView(
   {
-    fitToWidth = false,
     selectedList,
     onLoadStateChange,
     onDefinitionSelected,
@@ -107,12 +102,8 @@ export const OxfordWordListWebView = forwardRef<
   const isLoadedRef = useRef(false);
   const hasErrorRef = useRef(false);
   const latestListRef = useRef(selectedList);
-  const latestFitToWidthRef = useRef(fitToWidth);
-  const paneWidthFitScript =
-    buildPaneWidthFitScript(fitToWidth);
 
   latestListRef.current = selectedList;
-  latestFitToWidthRef.current = fitToWidth;
 
   const injectFilter = (wordListId: CoreWordListId) => {
     webViewRef.current?.injectJavaScript(
@@ -135,12 +126,6 @@ export const OxfordWordListWebView = forwardRef<
       injectFilter(selectedList);
     }
   }, [selectedList]);
-
-  useEffect(() => {
-    if (isLoadedRef.current) {
-      webViewRef.current?.injectJavaScript(paneWidthFitScript);
-    }
-  }, [paneWidthFitScript]);
 
   const handleNavigation = (request: ShouldStartLoadRequest) => {
     if (!request.isTopFrame) {
@@ -171,10 +156,7 @@ export const OxfordWordListWebView = forwardRef<
 
     isLoadedRef.current = true;
     onLoadStateChange?.('loaded');
-    webViewRef.current?.injectJavaScript(
-      buildPaneWidthFitScript(latestFitToWidthRef.current) +
-        buildWordListFilterScript(latestListRef.current),
-    );
+    injectFilter(latestListRef.current);
   };
 
   const handleError = () => {
@@ -197,7 +179,6 @@ export const OxfordWordListWebView = forwardRef<
         accessibilityLabel="Oxford core word list"
         allowsInlineMediaPlayback
         domStorageEnabled
-        injectedJavaScriptBeforeContentLoaded={paneWidthFitScript}
         javaScriptEnabled
         mediaPlaybackRequiresUserAction
         onError={handleError}

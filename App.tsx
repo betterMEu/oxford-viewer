@@ -2,7 +2,6 @@ import { useRef, useState } from 'react';
 import {
   StyleSheet,
   Text,
-  useWindowDimensions,
   View,
 } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
@@ -21,7 +20,6 @@ import {
   AlphabetIndexPlugin,
   type AlphabetLetter,
 } from './src/plugins/alphabet-index/AlphabetIndexPlugin';
-import { getPaneWidthFitMode } from './src/layout/getPaneWidthFitMode';
 import type { WordListWebMessage } from './src/word-lists/buildWordListFilterScript';
 import { DEFAULT_CORE_WORD_LIST } from './src/word-lists/coreWordLists';
 
@@ -37,10 +35,7 @@ export default function App() {
 }
 
 function AppContent() {
-  const { height, width } = useWindowDimensions();
   const { bottom, top } = useSafeAreaInsets();
-  const { fitDictionary, fitWordList } =
-    getPaneWidthFitMode(width, height);
   const wordListWebViewRef = useRef<OxfordWordListWebViewHandle>(null);
   const [selectedDefinitionUrl, setSelectedDefinitionUrl] = useState(
     INITIAL_DEFINITION_URL,
@@ -86,7 +81,6 @@ function AppContent() {
           )}
           <OxfordWordListWebView
             ref={wordListWebViewRef}
-            fitToWidth={fitWordList}
             onDefinitionSelected={setSelectedDefinitionUrl}
             onFilterResult={handleFilterResult}
             onLoadStateChange={handleWordListLoadStateChange}
@@ -100,10 +94,7 @@ function AppContent() {
           topInset={top}
         />
         <View style={styles.dictionaryPane}>
-          <DictionaryWebView
-            fitToWidth={fitDictionary}
-            url={selectedDefinitionUrl}
-          />
+          <DictionaryWebView url={selectedDefinitionUrl} />
         </View>
       </View>
     </SafeAreaView>

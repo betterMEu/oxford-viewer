@@ -104,18 +104,9 @@ body {
 }
 ```
 
-The app's pane-width plugin preserves the verified 320px native layout width.
-For panes narrower than 320px it calculates:
-
-```text
-scale = pane width / 320
-```
-
-It applies that result as a CSS zoom below 100% and compensates the body width,
-so the complete Oxford layout becomes smaller instead of reflowing into larger
-text. The scale is capped at 100%. It is enabled for the definition pane in
-portrait and the word-list pane in landscape. Rotation updates the injected
-style without reloading either Oxford page.
+As of 2026-07-26, the app does not override these widths or apply CSS zoom.
+Both the definition page and word-list page use Oxford's native page sizing in
+portrait and landscape.
 
 ## Risks
 

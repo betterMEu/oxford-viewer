@@ -47,51 +47,18 @@ describe('OxfordWordListWebView', () => {
     );
   });
 
-  it('installs pane-width fitting before content loads', async () => {
+  it('does not install pane-width fitting', async () => {
     const screen = await render(
       <OxfordWordListWebView
-        fitToWidth
         selectedList="ox3000"
         {...createProps()}
       />,
     );
 
-    expect(screen.getByTestId('oxford-word-list-webview')).toHaveProp(
-      'injectedJavaScriptBeforeContentLoaded',
-      expect.stringContaining('oxford-viewer-pane-width-fit'),
-    );
-  });
-
-  it('updates pane-width fitting after orientation changes', async () => {
-    const props = createProps();
-    const screen = await render(
-      <OxfordWordListWebView
-        fitToWidth
-        selectedList="ox3000"
-        {...props}
-      />,
-    );
-    await fireEvent(
-      screen.getByTestId('oxford-word-list-webview'),
-      'loadEnd',
-    );
-    mockInjectJavaScript.mockClear();
-
-    await screen.rerender(
-      <OxfordWordListWebView
-        fitToWidth={false}
-        selectedList="ox3000"
-        {...props}
-      />,
-    );
-
-    expect(mockInjectJavaScript).toHaveBeenCalledTimes(1);
-    expect(mockInjectJavaScript.mock.calls[0][0]).toContain(
-      'oxford-viewer-pane-width-fit',
-    );
-    expect(mockInjectJavaScript.mock.calls[0][0]).toContain(
-      'if (!false)',
-    );
+    expect(
+      screen.getByTestId('oxford-word-list-webview').props
+        .injectedJavaScriptBeforeContentLoaded,
+    ).toBeUndefined();
   });
 
   it('does not require a load-state callback', async () => {
