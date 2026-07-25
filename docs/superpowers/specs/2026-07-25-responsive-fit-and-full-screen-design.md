@@ -1,5 +1,22 @@
 # Responsive Pane Fit and Full-Screen Layout Design
 
+Status: pane-width fitting cancelled on 2026-07-26.
+
+## Cancellation decision
+
+Remove all definition-page and word-list page size adjustment. Both WebViews
+return to Oxford's native page sizing without injected width constraints,
+CSS zoom, or orientation-dependent fit modes.
+
+Keep the independent full-screen changes:
+
+- The system status bar remains hidden.
+- The root remains edge-to-edge vertically.
+- The A–Z index keeps Dynamic Island and Home indicator safe padding.
+
+The pane-fitting sections below are retained only as historical investigation
+and are not active application behavior.
+
 ## Goal
 
 Make the two Oxford pages fit their narrow split panes without horizontal
