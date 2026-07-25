@@ -3,15 +3,45 @@ import { describe, expect, it } from '@jest/globals';
 import { buildPaneWidthFitScript } from './buildPaneWidthFitScript';
 
 describe('buildPaneWidthFitScript', () => {
-  it('overrides the verified Oxford minimum widths when enabled', () => {
-    const script = buildPaneWidthFitScript(true);
+  const executeEnabledScript = (clientWidth: number) => {
+    const styleElement = {
+      id: '',
+      textContent: '',
+    };
+    const documentValue = {
+      addEventListener: jest.fn(),
+      createElement: jest.fn(() => styleElement),
+      documentElement: {
+        appendChild: jest.fn(),
+        clientWidth,
+      },
+      getElementById: jest.fn(() => null),
+      head: null,
+    };
+    const execute = new Function(
+      'document',
+      buildPaneWidthFitScript(true),
+    );
 
-    expect(script).toContain('oxford-viewer-pane-width-fit');
-    expect(script).toContain('body');
-    expect(script).toContain('.responsive_container');
-    expect(script).toContain('.responsive_row');
-    expect(script).toContain('min-width: 0 !important');
-    expect(script).toContain('overflow-x: hidden !important');
+    execute(documentValue);
+
+    return styleElement.textContent;
+  };
+
+  it('scales the native 320px layout below 100% to fit a narrow pane', () => {
+    const styleText = executeEnabledScript(200);
+
+    expect(styleText).toContain('min-width: 320px !important');
+    expect(styleText).toContain('zoom: 0.625 !important');
+    expect(styleText).toContain('width: 160% !important');
+    expect(styleText).not.toContain('min-width: 0 !important');
+  });
+
+  it('does not enlarge content above 100% in a wide pane', () => {
+    const styleText = executeEnabledScript(400);
+
+    expect(styleText).toContain('zoom: 1 !important');
+    expect(styleText).toContain('width: 100% !important');
   });
 
   it('removes the fit style when disabled', () => {

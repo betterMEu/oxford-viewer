@@ -19,28 +19,26 @@ export function buildPaneWidthFitScript(enabled: boolean): string {
           return false;
         }
 
+        var paneWidth =
+          document.documentElement.clientWidth || window.innerWidth;
+        var scale = Math.min(1, paneWidth / 320);
+        var compensatedWidth = 100 / scale;
+
         if (!styleElement) {
           styleElement = document.createElement('style');
           styleElement.id = '${STYLE_ELEMENT_ID}';
           styleParent.appendChild(styleElement);
         }
 
-        styleElement.textContent = \`
-          html,
-          body,
-          .responsive_container,
-          .responsive_row {
-            box-sizing: border-box !important;
-            max-width: 100% !important;
-            min-width: 0 !important;
-          }
-
-          html,
-          body {
-            overflow-x: hidden !important;
-            width: 100% !important;
-          }
-        \`;
+        styleElement.textContent =
+          'html {' +
+            'overflow-x: hidden !important;' +
+          '}' +
+          'body {' +
+            'min-width: 320px !important;' +
+            'width: ' + compensatedWidth + '% !important;' +
+            'zoom: ' + scale + ' !important;' +
+          '}';
         return true;
       }
 

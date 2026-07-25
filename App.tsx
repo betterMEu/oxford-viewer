@@ -76,7 +76,7 @@ function AppContent() {
       style={styles.safeArea}
       testID="app-safe-area"
     >
-      <StatusBar style="dark" />
+      <StatusBar hidden style="dark" />
       <View style={styles.splitPane}>
         <View style={styles.wordPane}>
           {filterError && (

@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it, jest } from '@jest/globals';
 import { act, fireEvent, render } from '@testing-library/react-native';
+import { StatusBar } from 'expo-status-bar';
 
 import App from './App';
 
@@ -69,6 +70,12 @@ describe('App', () => {
       right: 'additive',
       top: 'off',
     });
+  });
+
+  it('hides the system status bar above the edge-to-edge layout', async () => {
+    const screen = await render(<App />);
+
+    expect(screen.UNSAFE_getByType(StatusBar).props.hidden).toBe(true);
   });
 
   it('fits the definition pane in the default portrait viewport', async () => {

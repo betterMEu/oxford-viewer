@@ -104,10 +104,18 @@ body {
 }
 ```
 
-The app's pane-width plugin overrides these verified minimum widths and
-constrains the responsive containers to the WebView width. It is enabled for
-the definition pane in portrait and the word-list pane in landscape. Rotation
-updates the injected style without reloading either Oxford page.
+The app's pane-width plugin preserves the verified 320px native layout width.
+For panes narrower than 320px it calculates:
+
+```text
+scale = pane width / 320
+```
+
+It applies that result as a CSS zoom below 100% and compensates the body width,
+so the complete Oxford layout becomes smaller instead of reflowing into larger
+text. The scale is capped at 100%. It is enabled for the definition pane in
+portrait and the word-list pane in landscape. Rotation updates the injected
+style without reloading either Oxford page.
 
 ## Risks
 
