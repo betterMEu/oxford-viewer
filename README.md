@@ -1,12 +1,21 @@
 # Oxford Viewer
 
-Oxford Viewer 是一个仅供个人 iPhone 使用的 Oxford 学习客户端。本项目当前处于第一阶段：左侧显示测试单词，右侧通过 WebView 打开对应的 Oxford Learner's Dictionaries 页面。
+Oxford Viewer 是一个仅供个人 iPhone 使用的 Oxford 学习客户端。应用使用左右双 WebView 布局：左侧直接显示 Oxford 官方 Oxford 3000/5000 词表页面，右侧显示当前选中词条的 Oxford Learner's Dictionaries 释义页面。
 
 应用支持横屏和竖屏，横屏是主要学习布局。
 
+## 当前功能
+
+- 左侧顶部可切换 `Oxford 3000`、`Oxford 5000` 和 `5000 增补`。
+- 三种模式共用 Oxford 官方词表页面，通过页面已有的 `data-ox3000` 和 `data-ox5000` 属性控制词条可见性。
+- 左侧词条保留 Oxford 网页原生样式以及原生 UK/US 真人发音按钮。
+- 点击左侧词条时，左侧词表和滚动位置保持不变，仅由右侧 WebView 打开对应释义页面。
+- WebView 提供基础加载和错误状态。
+- 应用不保存 Oxford 词表、释义、网页内容、音频或音频 URL。
+
 ## 技术栈
 
-- Expo
+- Expo SDK 54
 - React Native
 - TypeScript
 - `react-native-webview`
@@ -16,8 +25,8 @@ Oxford Viewer 是一个仅供个人 iPhone 使用的 Oxford 学习客户端。�
 ### 准备工作
 
 1. 在 Windows 安装 Node.js 和 npm。
-2. 在 iPhone 从 App Store 安装 Expo Go。
-3. 让 Windows 电脑与 iPhone 连接同一个局域网。
+2. 在 iPhone 上从 App Store 安装最新版 Expo Go。
+3. 让 Windows 电脑与 iPhone 连接同一局域网。
 4. 确保 Windows 防火墙允许 Node.js/Expo 使用专用网络。
 
 ### 安装与启动
@@ -30,7 +39,7 @@ npm install
 npx expo start
 ```
 
-终端和浏览器中的 Expo 开发工具会显示二维码。用 iPhone 相机或 Expo Go 扫描二维码，然后在 Expo Go 中打开项目。
+终端和 Expo 开发工具会显示二维码。用 iPhone 相机或 Expo Go 扫描二维码，然后在 Expo Go 中打开项目。
 
 如果同一局域网内无法连接，可以尝试隧道模式：
 
@@ -54,31 +63,28 @@ npm run doctor
 ```text
 src/
 ├── components/
-│   ├── WordList.tsx
-│   ├── WordRow.tsx
+│   ├── CoreWordListSelector.tsx
+│   ├── OxfordWordListWebView.tsx
 │   └── DictionaryWebView.tsx
-├── data/
-│   └── words.ts
-├── types/
-│   └── word.ts
+├── word-lists/
+│   ├── coreWordLists.ts
+│   └── buildWordListFilterScript.ts
 └── services/
 ```
 
-## 第一阶段行为
+## 导航与过滤规则
 
-- 应用默认显示第一个测试单词的 Oxford 页面。
-- 应用支持横屏和竖屏，横屏提供主要的左右分栏学习布局。
-- 点击单词会切换右侧 WebView 页面。
-- UK 和 US 按钮在第一阶段保持可见，但处于禁用状态。
-- WebView 加载时显示简短提示，加载失败时显示简短错误提示。
-- 单词数据只保存 `word` 和 `oxfordUrl`。
-- Oxford 页面由设备直接加载；应用不抓取、不解析、不保存网页内容。
+- 左侧只允许 Oxford 官方词表 URL 保留在顶层 WebView。
+- Oxford `/definition/english/` 顶层链接会被拦截并交给右侧 WebView。
+- 左侧音频和其他非顶层资源请求继续放行。
+- 其他顶层导航会被阻止，避免左侧离开词表页面。
+- Oxford 3000：显示带 `data-ox3000` 的词条。
+- Oxford 5000：显示带 `data-ox5000` 的词条。
+- 5000 增补：显示带 `data-ox5000` 且不带 `data-ox3000` 的词条。
 
-## 当前未实现
+## 限制与风险
 
-- Oxford 真人发音
-- Oxford 音频按钮 DOM 识别
-- 搜索
-- 收藏
-- 数据库
-- 系统 TTS
+- 不提供搜索、收藏、数据库、登录、学习进度或系统 TTS。
+- 不下载、缓存或提取 Oxford 音频。
+- 词表过滤和导航依赖 Oxford 当前的 URL 与数据属性；Oxford 官网结构变化可能导致这些功能失效。
+- iPhone 上的 Expo Go、Oxford 原生发音和横竖屏交互仍需真机验收。

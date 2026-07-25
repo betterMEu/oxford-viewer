@@ -2,6 +2,17 @@
 
 Investigation date: 2026-07-25
 
+## Current application design
+
+This document is retained as a historical DOM investigation. The current
+implementation does not inject these pronunciation selectors into Oxford
+definition pages and does not recreate pronunciation controls.
+
+The left pane now displays Oxford's official word-list page in one WebView.
+Its existing UK and US controls and Oxford's own event handlers remain intact,
+so playback is initiated by the user directly on the Oxford page. The app does
+not extract, return, download, cache, or save Oxford audio URLs.
+
 ## Test page
 
 URL:
