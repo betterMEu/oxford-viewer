@@ -42,10 +42,17 @@ entire app, which leaves unused strips above and below the split layout.
 ### Web content fit
 
 Add a small script-builder plugin that installs or removes an idempotent style
-element in an Oxford page. When enabled, it overrides the verified Oxford
-minimum widths, constrains the responsive containers to the pane width, and
-hides residual horizontal overflow. This reflows the page at the pane width
-instead of clipping a 320px layout or using a fixed zoom ratio.
+element in an Oxford page. When enabled, it preserves Oxford's verified 320px
+natural layout width and calculates:
+
+```text
+scale = min(1, current pane width / 320)
+```
+
+The body is rendered at that scale with compensating width, so the complete
+native layout fits the pane and text becomes proportionally smaller instead of
+reflowing into a narrower, larger-looking layout. The scale is measured from
+the current WebView width rather than hardcoded for a particular iPhone.
 
 The app derives fit modes from `useWindowDimensions`:
 
@@ -61,6 +68,9 @@ without reloading the Oxford page.
 Keep `SafeAreaProvider`, but limit the root `SafeAreaView` to the left and right
 edges. The split panes therefore fill the screen from top to bottom.
 
+Hide the iOS status bar so it does not remain visible over the edge-to-edge app
+content.
+
 Pass the current top and bottom safe-area insets to `AlphabetIndexPlugin`. Its
 background continues edge-to-edge, while its letter-button area receives safe
 padding. This keeps A below the Dynamic Island in portrait and Z above the Home
@@ -74,11 +84,12 @@ Oxford DOM behavior changes are included.
 ## Tests
 
 - Verify portrait and landscape choose the required fit modes.
-- Verify the injected style overrides the confirmed Oxford minimum widths and
-  can be removed.
+- Verify the injected style calculates a below-100% scale for panes narrower
+  than 320px, preserves the 320px natural layout, and can be removed.
 - Verify both WebViews install the fit script before content loads and apply
   orientation changes to an already-loaded page.
 - Verify the root safe area excludes top and bottom edges.
+- Verify the system status bar is hidden.
 - Verify the alphabet index applies supplied top and bottom safe insets.
 - Run the full Jest suite, TypeScript check, Expo Doctor, and
   `git diff --check`.
