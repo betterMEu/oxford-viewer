@@ -9,7 +9,9 @@ Oxford Viewer 是一个仅供个人 iPhone 使用的 Oxford 学习客户端。�
 - 左侧固定显示 `Oxford 3000`，不提供词库切换按钮。
 - 应用通过页面已有的 `data-ox3000` 属性控制词条可见性。
 - 左侧词条保留 Oxford 网页原生样式以及原生 UK/US 真人发音按钮。
+- 两个 WebView 中间提供原生 A–Z 竖向字母索引；点击字母会将左侧词表定位到该字母的第一个 Oxford 3000 单词。当前 Oxford 3000 没有 X 词条，因此 X 可见但禁用。
 - 点击左侧词条时，左侧词表和滚动位置保持不变，仅由右侧 WebView 打开对应释义页面。
+- 右侧释义页加载成功后，会按当前 DOM 位置自动滚动到 `#entryContent`，跳过 Oxford 页头并保留词条标题、音标和原生发音。
 - 右侧释义页加载时不显示额外动效或遮罩，加载失败时显示简短错误提示。
 - 应用不保存 Oxford 词表、释义、网页内容、音频或音频 URL。
 
@@ -68,6 +70,12 @@ src/
 ├── word-lists/
 │   ├── coreWordLists.ts
 │   └── buildWordListFilterScript.ts
+├── plugins/
+│   ├── alphabet-index/
+│   │   ├── AlphabetIndexPlugin.tsx
+│   │   └── buildAlphabetScrollScript.ts
+│   └── definition-auto-scroll/
+│       └── buildDefinitionAutoScrollScript.ts
 └── services/
 ```
 
@@ -78,10 +86,12 @@ src/
 - 左侧音频和其他非顶层资源请求继续放行。
 - 其他顶层导航会被阻止，避免左侧离开词表页面。
 - Oxford 3000：显示带 `data-ox3000` 的词条。
+- 字母定位只读取可见 `li[data-hw][data-ox3000]` 的 `data-hw`，不向 React Native 返回词表内容。
+- 释义自动定位使用 `#entryContent` 的实时文档坐标，不使用固定像素距离。
 
 ## 限制与风险
 
 - 不提供搜索、收藏、数据库、登录、学习进度或系统 TTS。
 - 不下载、缓存或提取 Oxford 音频。
-- 词表过滤和导航依赖 Oxford 当前的 URL 与数据属性；Oxford 官网结构变化可能导致这些功能失效。
+- 词表过滤、字母定位、释义定位和导航依赖 Oxford 当前的 URL、`data-*` 属性与 DOM；Oxford 官网结构变化可能导致这些功能失效。
 - iPhone 上的 Expo Go、Oxford 原生发音和横竖屏交互仍需真机验收。
