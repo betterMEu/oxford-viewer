@@ -1,5 +1,8 @@
 const OXFORD_DEFINITION_LAYOUT_WIDTH = 320;
 const SCALE_STYLE_ID = 'oxford-viewer-definition-page-scale';
+const VIEWPORT_SELECTOR = 'meta[name="viewport"]';
+const ORIGINAL_VIEWPORT_CONTENT_ATTRIBUTE =
+  'data-oxford-viewer-original-content';
 
 export function buildDefinitionPageScaleScript(
   paneWidth: number,
@@ -16,12 +19,13 @@ export function buildDefinitionPageScaleScript(
       )
     : 1;
   const scale = Math.round(rawScale * 10_000) / 10_000;
-  const bodyWidth =
-    Math.round((100 / scale) * 10_000) / 10_000;
 
   return `
     (function () {
       var styleId = '${SCALE_STYLE_ID}';
+      var viewportSelector = '${VIEWPORT_SELECTOR}';
+      var originalViewportContentAttribute =
+        '${ORIGINAL_VIEWPORT_CONTENT_ATTRIBUTE}';
       var scale = ${scale};
       var existingStyle = document.getElementById(styleId);
 
@@ -32,8 +36,32 @@ export function buildDefinitionPageScaleScript(
         }
       }
 
+      function restoreViewport() {
+        var viewport = document.querySelector(viewportSelector);
+
+        if (
+          !viewport ||
+          !viewport.hasAttribute(
+            originalViewportContentAttribute
+          )
+        ) {
+          return;
+        }
+
+        viewport.setAttribute(
+          'content',
+          viewport.getAttribute(
+            originalViewportContentAttribute
+          ) || ''
+        );
+        viewport.removeAttribute(
+          originalViewportContentAttribute
+        );
+      }
+
       if (scale >= 1) {
         stopScaleObserver();
+        restoreViewport();
         window.__oxfordDefinitionPageScale = 1;
 
         if (existingStyle) {
@@ -44,10 +72,26 @@ export function buildDefinitionPageScaleScript(
 
       function applyScale() {
         var target = document.head || document.documentElement;
+        var viewport = document.querySelector(viewportSelector);
 
-        if (!target) {
+        if (!target || !viewport) {
           return false;
         }
+
+        if (
+          !viewport.hasAttribute(
+            originalViewportContentAttribute
+          )
+        ) {
+          viewport.setAttribute(
+            originalViewportContentAttribute,
+            viewport.getAttribute('content') || ''
+          );
+        }
+        viewport.setAttribute(
+          'content',
+          'width=320, initial-scale=${scale}'
+        );
 
         var style = document.getElementById(styleId);
 
@@ -59,9 +103,9 @@ export function buildDefinitionPageScaleScript(
 
         style.textContent =
           'html { overflow-x: hidden !important; } ' +
-          'body { min-width: 320px !important; ' +
-          'zoom: ${scale} !important; ' +
-          'width: ${bodyWidth}% !important; }';
+          'html, body { width: 320px !important; } ' +
+          'body { max-width: 320px !important; ' +
+          'min-width: 320px !important; }';
         stopScaleObserver();
         window.__oxfordDefinitionPageScale = scale;
         return true;

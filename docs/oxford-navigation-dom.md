@@ -113,29 +113,40 @@ body {
 }
 ```
 
-As of 2026-07-26, only the definition page is automatically shrunk in portrait.
-The app preserves Oxford's 320 CSS-pixel layout and calculates:
+At a narrow browser viewport representative of the portrait definition pane,
+the Oxford page reported about 225px of root client width and 327px of root
+scroll width. The body and `.responsive_container` both retained their 320px
+minimum width.
+
+An earlier implementation applied CSS `zoom` while expanding the body to
+`100 / scale %`, then hid root overflow. Physical iPhone testing confirmed that
+the page remained visibly draggable from side to side. The reciprocal body
+width preserved a layout wider than the pane, and CSS overflow did not
+reliably reduce the native `WKWebView` scroll content size.
+
+The definition page now uses viewport-level scaling in portrait:
 
 ```text
 scale = min(1, native definition pane width / 320)
-body width = 100 / scale percent
+viewport width = 320 CSS pixels
+viewport initial-scale = scale
 ```
 
-It applies those values through a definition-only CSS `zoom` style. The
-reciprocal body width lets the complete 320-pixel layout fit in a narrower
-native pane, producing the page-wide shrink effect of a pinch-in gesture.
-The portrait style also keeps `body` at a 320px minimum width and applies
-`overflow-x: hidden` to the root `html` scrolling container. The complete
-layout is therefore scaled proportionally into the pane without retaining a
-horizontal drag range.
-If the script runs before the document root exists, it installs its own
-`MutationObserver` before the entry auto-scroll observer. The active scale is
-published only after the style is attached, so entry alignment cannot use a
-scale that is not yet visible.
+The app stores Oxford's original viewport content and updates the existing
+viewport meta element to `width=320, initial-scale=<scale>`. A small app-owned
+style fixes `html` and `body` at that same logical width and hides only residual
+root overflow. It does not use CSS `zoom`, transforms, or reciprocal percentage
+widths.
 
-In landscape, the injected definition scale style is removed and the active
-scale is reset to `1`. The word-list WebView receives no sizing script and
-continues to use Oxford's native page sizing in both orientations.
+If the viewport meta element is not yet present at document start, the app
+installs a `MutationObserver` before the entry auto-scroll observer. The active
+scale is published only after the viewport and width style are applied, so
+safe-area entry alignment uses the same scale visible to the user.
+
+In landscape, Oxford's stored viewport content is restored, the app-owned width
+style is removed, and the active scale is reset to `1`. The word-list WebView
+receives no sizing script and continues to use Oxford's native page sizing in
+both orientations.
 
 ## Risks
 
@@ -143,8 +154,6 @@ continues to use Oxford's native page sizing in both orientations.
   responsive layout, or page loading behavior without notice.
 - Late-loading advertising or other Oxford-controlled content can change page
   geometry after load.
-- CSS `zoom` is WebKit-specific and targets the iPhone WebView used by this
-  project.
 - The automated tests verify generated scripts and WebView integration; iPhone
-  Expo Go must still be used to confirm the exact visual scale and safe-area
-  alignment on a physical device.
+  Expo Go must still be used to confirm that native horizontal panning is gone
+  and that visual scale and safe-area alignment remain correct.
