@@ -1,34 +1,118 @@
-# Oxford 真人发音按钮 DOM 观察记录
+# Oxford Audio DOM Investigation
 
-本文件用于以后通过真实设备和当前 Oxford 页面人工记录 UK、US 真人发音按钮的 DOM 结构。
+Investigation date: 2026-07-25
 
-## 记录原则
+## Test page
 
-- 只记录实际观察到的页面结构。
-- 不猜测 CSS 选择器、属性或音频地址。
-- 不复制或保存 Oxford 释义、音频文件或完整网页内容。
-- 页面结构变化后重新观察并注明日期。
+URL:
 
-## 观察日期
+https://www.oxfordlearnersdictionaries.com/definition/english/abandon_1
 
-尚未记录。
+## UK pronunciation
 
-## Oxford 页面 URL
+Button HTML:
 
-尚未记录。
+```html
+<div class="sound audio_play_button pron-uk icon-audio"
+     data-src-mp3="https://www.oxfordlearnersdictionaries.com/media/english/uk_pron/a/aba/aband/abandon__gb_2.mp3"
+     data-src-ogg="https://www.oxfordlearnersdictionaries.com/media/english/uk_pron_ogg/a/aba/aband/abandon__gb_2.ogg"
+     title="abandon pronunciation
+                    English"
+     style="cursor: pointer"
+     valign="top">&nbsp;</div>
+```
 
-## UK 发音控件
+- HTML tag: `div`
+- `id`: none
+- `class`: `sound audio_play_button pron-uk icon-audio`
+- Data attributes:
+  - `data-src-mp3`: the UK MP3 URL shown above
+  - `data-src-ogg`: the UK OGG URL shown above
+- Other observed attributes: `title`, `style`, and `valign`
 
-尚未记录。
+Selector:
 
-## US 发音控件
+```css
+#entryContent > .entry > .top-container > .top-g > .webtop > .phonetics > .phons_br > .audio_play_button.pron-uk
+```
 
-尚未记录。
+This selector matched exactly one element on the test page at the time of
+investigation.
 
-## 点击与播放行为
+Audio element:
 
-尚未记录。
+No `<audio>` element was present in the document before the click or after the
+click. After a real click on the UK control, the browser observed
+`abandon__gb_2.mp3` loading as an `audio` resource. The location and type of any
+script-internal audio player object are `UNKNOWN`.
 
-## 备注
+Trigger method:
 
-第一阶段不实现真人发音功能。
+A click on the `div.audio_play_button.pron-uk` control triggered loading of the
+URL in `data-src-mp3`. There was no inline `onclick` attribute. The exact event
+listener implementation is `UNKNOWN`. Whether calling `HTMLElement.click()`
+from injected JavaScript triggers playback is `UNKNOWN`; no JavaScript was
+injected during this investigation.
+
+## US pronunciation
+
+Button HTML:
+
+```html
+<div class="sound audio_play_button pron-us icon-audio"
+     data-src-mp3="https://www.oxfordlearnersdictionaries.com/media/english/us_pron/a/aba/aband/abandon__us_2.mp3"
+     data-src-ogg="https://www.oxfordlearnersdictionaries.com/media/english/us_pron_ogg/a/aba/aband/abandon__us_2.ogg"
+     title="abandon pronunciation
+                    American"
+     style="cursor: pointer"
+     valign="top">&nbsp;</div>
+```
+
+- HTML tag: `div`
+- `id`: none
+- `class`: `sound audio_play_button pron-us icon-audio`
+- Data attributes:
+  - `data-src-mp3`: the US MP3 URL shown above
+  - `data-src-ogg`: the US OGG URL shown above
+- Other observed attributes: `title`, `style`, and `valign`
+
+Selector:
+
+```css
+#entryContent > .entry > .top-container > .top-g > .webtop > .phonetics > .phons_n_am > .audio_play_button.pron-us
+```
+
+This selector matched exactly one element on the test page at the time of
+investigation.
+
+Audio element:
+
+No `<audio>` element was present in the document before the click or after the
+click. After a real click on the US control, the browser observed
+`abandon__us_2.mp3` loading as an `audio` resource. The location and type of any
+script-internal audio player object are `UNKNOWN`.
+
+Trigger method:
+
+A click on the `div.audio_play_button.pron-us` control triggered loading of the
+URL in `data-src-mp3`. There was no inline `onclick` attribute. The exact event
+listener implementation is `UNKNOWN`. Whether calling `HTMLElement.click()`
+from injected JavaScript triggers playback is `UNKNOWN`; no JavaScript was
+injected during this investigation.
+
+## Risks
+
+- The controls have no `id`; selectors depend on Oxford's current class names
+  and DOM hierarchy.
+- Broad selectors such as `.pron-uk` and `.pron-us` are unsafe. The test page
+  also contains pronunciation controls for hidden verb forms and the Word of
+  the Day.
+- The `title` attribute contains variable whitespace and is not a reliable
+  selector.
+- Oxford can change the DOM, classes, media URLs, event implementation, or
+  access policy without notice.
+- No `<audio>` element is exposed in the DOM. Playback is managed by
+  page-internal JavaScript whose implementation remains `UNKNOWN`.
+- A real browser click was confirmed, but a WebView-injected JavaScript click
+  was not tested and may be affected by trusted-event or media-playback
+  restrictions.
