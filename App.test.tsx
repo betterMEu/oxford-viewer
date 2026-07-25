@@ -60,29 +60,20 @@ describe('App', () => {
     }
   });
 
-  it('defaults to Oxford 3000 and disables switching while loading', async () => {
+  it('does not render core word list switching buttons', async () => {
     const screen = await render(<App />);
-
-    expect(screen.getByRole('button', { name: 'Oxford 3000' })).toHaveProp(
-      'accessibilityState',
-      { disabled: true, selected: true },
-    );
-    expect(screen.getByRole('button', { name: 'Oxford 5000' })).toBeDisabled();
-  });
-
-  it('enables switching after the word list loads and its filter succeeds', async () => {
-    const screen = await render(<App />);
-    const webView = screen.getByTestId('oxford-word-list-webview');
-
-    await fireEvent(webView, 'loadEnd');
-    await fireFilterMessage(webView, {
-      type: 'WORD_LIST_FILTER_APPLIED',
-      wordListId: 'ox3000',
-    });
 
     expect(
-      screen.getByRole('button', { name: 'Oxford 5000' }),
-    ).not.toBeDisabled();
+      screen.queryByRole('button', { name: 'Oxford 3000' }),
+    ).toBeNull();
+    expect(
+      screen.queryByRole('button', { name: 'Oxford 5000' }),
+    ).toBeNull();
+    expect(
+      screen.queryByRole('button', {
+        name: 'Oxford 5000 excluding Oxford 3000',
+      }),
+    ).toBeNull();
   });
 
   it('routes a top-level definition link to the right WebView', async () => {
@@ -106,65 +97,21 @@ describe('App', () => {
     });
   });
 
-  it('shows a new selection only after its filter succeeds', async () => {
+  it('reports a failure to apply the fixed Oxford 3000 filter', async () => {
     const screen = await render(<App />);
     const webView = screen.getByTestId('oxford-word-list-webview');
 
     await fireEvent(webView, 'loadEnd');
-    await fireFilterMessage(webView, {
-      type: 'WORD_LIST_FILTER_APPLIED',
-      wordListId: 'ox3000',
-    });
-    await fireEvent.press(
-      screen.getByRole('button', { name: 'Oxford 5000' }),
-    );
-
-    expect(
-      screen.getByRole('button', { name: 'Oxford 3000' }),
-    ).toHaveProp('accessibilityState', {
-      disabled: false,
-      selected: true,
-    });
-
-    await fireFilterMessage(webView, {
-      type: 'WORD_LIST_FILTER_APPLIED',
-      wordListId: 'ox5000',
-    });
-
-    expect(
-      screen.getByRole('button', { name: 'Oxford 5000' }),
-    ).toHaveProp('accessibilityState', {
-      disabled: false,
-      selected: true,
-    });
-  });
-
-  it('keeps the last applied selection and reports a filter failure', async () => {
-    const screen = await render(<App />);
-    const webView = screen.getByTestId('oxford-word-list-webview');
-
-    await fireEvent(webView, 'loadEnd');
-    await fireFilterMessage(webView, {
-      type: 'WORD_LIST_FILTER_APPLIED',
-      wordListId: 'ox3000',
-    });
-    await fireEvent.press(
-      screen.getByRole('button', { name: 'Oxford 5000' }),
-    );
     await fireFilterMessage(webView, {
       type: 'WORD_LIST_FILTER_FAILED',
-      wordListId: 'ox5000',
+      wordListId: 'ox3000',
       reason: 'WORD_LIST_DOM_NOT_FOUND',
     });
 
     expect(
-      screen.getByRole('button', { name: 'Oxford 3000' }),
-    ).toHaveProp('accessibilityState', {
-      disabled: false,
-      selected: true,
-    });
-    expect(
-      screen.getByText('无法切换词库，Oxford 页面结构可能已变化。'),
+      screen.getByText(
+        '无法显示 Oxford 3000，Oxford 页面结构可能已变化。',
+      ),
     ).toBeOnTheScreen();
   });
 });

@@ -1,16 +1,16 @@
 # Oxford Viewer
 
-Oxford Viewer 是一个仅供个人 iPhone 使用的 Oxford 学习客户端。应用使用左右双 WebView 布局：左侧直接显示 Oxford 官方 Oxford 3000/5000 词表页面，右侧显示当前选中词条的 Oxford Learner's Dictionaries 释义页面。
+Oxford Viewer 是一个仅供个人 iPhone 使用的 Oxford 学习客户端。应用使用左右双 WebView 布局：左侧直接显示 Oxford 官方核心词表页面并固定为 Oxford 3000，右侧显示当前选中词条的 Oxford Learner's Dictionaries 释义页面。
 
 应用支持横屏和竖屏，横屏是主要学习布局。
 
 ## 当前功能
 
-- 左侧顶部可切换 `Oxford 3000`、`Oxford 5000` 和 `5000 增补`。
-- 三种模式共用 Oxford 官方词表页面，通过页面已有的 `data-ox3000` 和 `data-ox5000` 属性控制词条可见性。
+- 左侧固定显示 `Oxford 3000`，不提供词库切换按钮。
+- 应用通过页面已有的 `data-ox3000` 属性控制词条可见性。
 - 左侧词条保留 Oxford 网页原生样式以及原生 UK/US 真人发音按钮。
 - 点击左侧词条时，左侧词表和滚动位置保持不变，仅由右侧 WebView 打开对应释义页面。
-- WebView 提供基础加载和错误状态。
+- 右侧释义页加载时不显示额外动效或遮罩，加载失败时显示简短错误提示。
 - 应用不保存 Oxford 词表、释义、网页内容、音频或音频 URL。
 
 ## 技术栈
@@ -63,7 +63,6 @@ npm run doctor
 ```text
 src/
 ├── components/
-│   ├── CoreWordListSelector.tsx
 │   ├── OxfordWordListWebView.tsx
 │   └── DictionaryWebView.tsx
 ├── word-lists/
@@ -79,8 +78,6 @@ src/
 - 左侧音频和其他非顶层资源请求继续放行。
 - 其他顶层导航会被阻止，避免左侧离开词表页面。
 - Oxford 3000：显示带 `data-ox3000` 的词条。
-- Oxford 5000：显示带 `data-ox5000` 的词条。
-- 5000 增补：显示带 `data-ox5000` 且不带 `data-ox3000` 的词条。
 
 ## 限制与风险
 

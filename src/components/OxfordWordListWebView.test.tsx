@@ -43,6 +43,23 @@ describe('OxfordWordListWebView', () => {
     );
   });
 
+  it('does not require a load-state callback', async () => {
+    const props = createProps();
+    const screen = await render(
+      <OxfordWordListWebView
+        selectedList="ox3000"
+        onDefinitionSelected={props.onDefinitionSelected}
+        onFilterResult={props.onFilterResult}
+      />,
+    );
+    const webView = screen.getByTestId('oxford-word-list-webview');
+
+    await fireEvent(webView, 'loadStart');
+    await fireEvent(webView, 'loadEnd');
+
+    expect(mockInjectJavaScript).toHaveBeenCalledTimes(1);
+  });
+
   it('injects the current mode after the page finishes loading', async () => {
     const screen = await render(
       <OxfordWordListWebView selectedList="ox3000" {...createProps()} />,

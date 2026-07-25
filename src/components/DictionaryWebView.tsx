@@ -6,7 +6,7 @@ type DictionaryWebViewProps = {
   url: string;
 };
 
-type LoadState = 'idle' | 'loading' | 'loaded' | 'error';
+type LoadState = 'idle' | 'error';
 
 export function DictionaryWebView({ url }: DictionaryWebViewProps) {
   const [loadState, setLoadState] = useState<LoadState>('idle');
@@ -16,21 +16,11 @@ export function DictionaryWebView({ url }: DictionaryWebViewProps) {
       <WebView
         accessibilityLabel="Oxford dictionary definition page"
         onError={() => setLoadState('error')}
-        onLoadEnd={() =>
-          setLoadState((currentState) =>
-            currentState === 'error' ? 'error' : 'loaded',
-          )
-        }
-        onLoadStart={() => setLoadState('loading')}
+        onLoadStart={() => setLoadState('idle')}
         source={{ uri: url }}
         style={styles.webView}
         testID="dictionary-webview"
       />
-      {loadState === 'loading' && (
-        <View pointerEvents="none" style={styles.statusOverlay}>
-          <Text style={styles.statusText}>Loading Oxford page…</Text>
-        </View>
-      )}
       {loadState === 'error' && (
         <View
           accessibilityRole="alert"

@@ -23,7 +23,7 @@ type ShouldStartLoadRequest = Parameters<
 
 type OxfordWordListWebViewProps = {
   selectedList: CoreWordListId;
-  onLoadStateChange: (state: WordListLoadState) => void;
+  onLoadStateChange?: (state: WordListLoadState) => void;
   onDefinitionSelected: (url: string) => void;
   onFilterResult: (result: WordListWebMessage) => void;
 };
@@ -115,7 +115,7 @@ export function OxfordWordListWebView({
   const handleLoadStart = () => {
     isLoadedRef.current = false;
     hasErrorRef.current = false;
-    onLoadStateChange('loading');
+    onLoadStateChange?.('loading');
   };
 
   const handleLoadEnd = () => {
@@ -124,14 +124,14 @@ export function OxfordWordListWebView({
     }
 
     isLoadedRef.current = true;
-    onLoadStateChange('loaded');
+    onLoadStateChange?.('loaded');
     injectFilter(latestListRef.current);
   };
 
   const handleError = () => {
     hasErrorRef.current = true;
     isLoadedRef.current = false;
-    onLoadStateChange('error');
+    onLoadStateChange?.('error');
   };
 
   const handleMessage = (event: WebViewMessageEvent) => {
