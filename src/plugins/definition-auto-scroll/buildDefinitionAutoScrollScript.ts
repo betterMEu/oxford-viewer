@@ -1,15 +1,23 @@
 export function buildDefinitionAutoScrollScript(): string {
   return `
     (function () {
-      var target = document.querySelector('#entryContent');
+      function scrollToEntry() {
+        var target = document.querySelector('#entryContent');
 
-      if (!target) {
-        return;
+        if (!target) {
+          return;
+        }
+
+        target.scrollIntoView({
+          block: 'start',
+          behavior: 'auto'
+        });
       }
 
-      var targetTop =
-        target.getBoundingClientRect().top + window.scrollY;
-      window.scrollTo(0, targetTop);
+      scrollToEntry();
+      [250, 750, 1500].forEach(function (delay) {
+        setTimeout(scrollToEntry, delay);
+      });
     })();
     true;
   `;

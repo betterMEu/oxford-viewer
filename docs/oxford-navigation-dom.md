@@ -58,17 +58,24 @@ Observed document offsets at initial scroll position:
 | 1280×720 | about 504px | about 735px |
 
 The offsets change with responsive layout, so the app does not use a fixed
-distance. After a successful load it calculates:
+distance. After a successful load it positions the verified element with:
 
 ```js
-var targetTop =
-  target.getBoundingClientRect().top + window.scrollY;
-window.scrollTo(0, targetTop);
+target.scrollIntoView({
+  block: 'start',
+  behavior: 'auto'
+});
 ```
 
 Positioning `#entryContent` at the top skips Oxford's page header while
 preserving the word heading, phonetics, and native pronunciation controls.
 Positioning the first `.sense` instead would hide those useful entry controls.
+
+Oxford-controlled content can appear or reflow after the WebView's load event.
+A single immediate scroll can therefore be overwritten or run before the
+target is available. The injected script performs the same lookup immediately
+and again after 250ms, 750ms, and 1500ms. The retries are bounded so they do not
+continue interfering with normal reading.
 
 ## Risks
 
