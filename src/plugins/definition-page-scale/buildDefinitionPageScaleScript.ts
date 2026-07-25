@@ -58,7 +58,10 @@ export function buildDefinitionPageScaleScript(
         }
 
         style.textContent =
-          'body { zoom: ${scale} !important; width: ${bodyWidth}% !important; }';
+          'html { overflow-x: hidden !important; } ' +
+          'body { min-width: 320px !important; ' +
+          'zoom: ${scale} !important; ' +
+          'width: ${bodyWidth}% !important; }';
         stopScaleObserver();
         window.__oxfordDefinitionPageScale = scale;
         return true;

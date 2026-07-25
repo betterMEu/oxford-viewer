@@ -124,6 +124,10 @@ body width = 100 / scale percent
 It applies those values through a definition-only CSS `zoom` style. The
 reciprocal body width lets the complete 320-pixel layout fit in a narrower
 native pane, producing the page-wide shrink effect of a pinch-in gesture.
+The portrait style also keeps `body` at a 320px minimum width and applies
+`overflow-x: hidden` to the root `html` scrolling container. The complete
+layout is therefore scaled proportionally into the pane without retaining a
+horizontal drag range.
 If the script runs before the document root exists, it installs its own
 `MutationObserver` before the entry auto-scroll observer. The active scale is
 published only after the style is attached, so entry alignment cannot use a

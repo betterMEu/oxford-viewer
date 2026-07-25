@@ -63,6 +63,12 @@ describe('buildDefinitionPageScaleScript', () => {
     expect(createdStyle.textContent).toContain(
       'width: 160% !important',
     );
+    expect(createdStyle.textContent).toContain(
+      'html { overflow-x: hidden !important; }',
+    );
+    expect(createdStyle.textContent).toContain(
+      'min-width: 320px !important',
+    );
     expect(
       documentValue.head.appendChild,
     ).toHaveBeenCalledWith(createdStyle);
