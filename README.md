@@ -15,12 +15,37 @@ Oxford Viewer 是一个仅供个人 iPhone 使用的 Oxford 学习客户端。�
 - 右侧释义页加载时不显示额外动效或遮罩，加载失败时显示简短错误提示。
 - 应用不保存 Oxford 词表、释义、网页内容、音频或音频 URL。
 
-## 技术栈
+## 开发环境与版本
 
-- Expo SDK 54
-- React Native
-- TypeScript
-- `react-native-webview`
+以下开发工具版本是本次在 Windows 上完成安装、检查和运行验证时使用的版本，不代表项目声明的最低版本：
+
+| 工具 | 已验证版本 |
+| --- | --- |
+| Node.js | 24.16.0 |
+| npm | 11.13.0 |
+| Expo CLI | 54.0.26（通过 `npx expo` 使用） |
+| Expo Go | App Store 最新版（与 Expo SDK 54 配套） |
+
+项目的核心运行依赖：
+
+| 工具库 | `package.json` 版本 | 本次安装版本 |
+| --- | --- | --- |
+| Expo | `~54.0.0` | 54.0.36 |
+| React | `19.1.0` | 19.1.0 |
+| React Native | `0.81.5` | 0.81.5 |
+| React Native WebView | `13.15.0` | 13.15.0 |
+| React Native Safe Area Context | `~5.6.0` | 5.6.2 |
+| Expo Status Bar | `~3.0.9` | 3.0.9 |
+
+主要开发与测试依赖：
+
+| 工具库 | `package.json` 版本 | 本次安装版本 |
+| --- | --- | --- |
+| TypeScript | `~5.9.2` | 5.9.3 |
+| Jest | `^29.7.0` | 29.7.0 |
+| Jest Expo | `~54.0.17` | 54.0.17 |
+| Testing Library for React Native | `13.3.3` | 13.3.3 |
+| React Test Renderer | `19.1.0` | 19.1.0 |
 
 ## Windows + iPhone + Expo Go 运行
 
