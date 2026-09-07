@@ -113,7 +113,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   statusOverlay: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     alignItems: 'center',
     backgroundColor: 'rgba(255, 255, 255, 0.94)',
     justifyContent: 'center',

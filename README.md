@@ -17,42 +17,42 @@ Oxford Viewer 是一个仅供个人 iPhone 使用的 Oxford 学习客户端。�
 
 ## 开发环境与版本
 
-以下开发工具版本是本次在 Windows 上完成安装、检查和运行验证时使用的版本，不代表项目声明的最低版本：
+以下开发工具版本是升级至 SDK 57 时在 Windows 上安装和检查使用的版本，不代表项目声明的最低版本。iPhone 真机运行仍需验收：
 
 | 工具 | 已验证版本 |
 | --- | --- |
 | Node.js | 24.16.0 |
 | npm | 11.13.0 |
-| Expo CLI | 54.0.26（通过 `npx expo` 使用） |
-| Expo Go | App Store 最新版（与 Expo SDK 54 配套） |
+| Expo CLI | 57.0.22（通过 `npx expo` 使用） |
+| Expo Go | 需支持 Expo SDK 57（尚未真机验证） |
 
 项目的核心运行依赖：
 
 | 工具库 | `package.json` 版本 | 本次安装版本 |
 | --- | --- | --- |
-| Expo | `~54.0.0` | 54.0.36 |
-| React | `19.1.0` | 19.1.0 |
-| React Native | `0.81.5` | 0.81.5 |
-| React Native WebView | `13.15.0` | 13.15.0 |
-| React Native Safe Area Context | `~5.6.0` | 5.6.2 |
-| Expo Status Bar | `~3.0.9` | 3.0.9 |
+| Expo | `~57.0.20` | 57.0.20 |
+| React | `19.2.3` | 19.2.3 |
+| React Native | `0.86.3` | 0.86.3 |
+| React Native WebView | `13.16.1` | 13.16.1 |
+| React Native Safe Area Context | `~5.7.0` | 5.7.0 |
+| Expo Status Bar | `~57.0.1` | 57.0.1 |
 
 主要开发与测试依赖：
 
 | 工具库 | `package.json` 版本 | 本次安装版本 |
 | --- | --- | --- |
-| TypeScript | `~5.9.2` | 5.9.3 |
+| TypeScript | `~6.0.3` | 6.0.3 |
 | Jest | `^29.7.0` | 29.7.0 |
-| Jest Expo | `~54.0.17` | 54.0.17 |
+| Jest Expo | `~57.0.5` | 57.0.5 |
 | Testing Library for React Native | `13.3.3` | 13.3.3 |
-| React Test Renderer | `19.1.0` | 19.1.0 |
+| React Test Renderer | `19.2.3` | 19.2.3 |
 
 ## Windows + iPhone + Expo Go 运行
 
 ### 准备工作
 
 1. 在 Windows 安装 Node.js 和 npm。
-2. 在 iPhone 上从 App Store 安装最新版 Expo Go。
+2. 在 iOS 16.4 或更高版本的 iPhone 上安装支持 Expo SDK 57 的 Expo Go；版本对应关系见 [Expo Go 下载页面](https://expo.dev/go)。
 3. 让 Windows 电脑与 iPhone 连接同一局域网。
 4. 确保 Windows 防火墙允许 Node.js/Expo 使用专用网络。
 

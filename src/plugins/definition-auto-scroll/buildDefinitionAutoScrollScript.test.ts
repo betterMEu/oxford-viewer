@@ -1,4 +1,4 @@
-import { describe, expect, it } from '@jest/globals';
+import { describe, expect, it, jest } from '@jest/globals';
 
 import { buildDefinitionAutoScrollScript } from './buildDefinitionAutoScrollScript';
 
@@ -18,7 +18,7 @@ function runInjectedScript(
     __oxfordDefinitionAutoScrollInstalled?: boolean;
     __oxfordDefinitionPageScale?: number;
   },
-  mutationObserverValue: jest.Mock,
+  mutationObserverValue: jest.Mock<(callback: () => void) => unknown>,
   topInset = 0,
 ) {
   const execute = new Function(
