@@ -6,6 +6,7 @@ import {
 } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { WebView } from 'react-native-webview';
+import { PRONUNCIATION_SCRIPT } from '../plugins/pronunciation/buildPronunciationScript';
 
 import {
   buildDefinitionAutoScrollScript,
@@ -80,7 +81,7 @@ export function DictionaryWebView({
         ref={webViewRef}
         accessibilityLabel="Oxford dictionary definition page"
         injectedJavaScriptBeforeContentLoaded={
-          definitionPageScript
+          PRONUNCIATION_SCRIPT + definitionPageScript
         }
         onError={handleError}
         onLoadEnd={handleLoadEnd}

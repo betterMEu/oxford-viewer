@@ -5,6 +5,7 @@ import {
   useRef,
 } from 'react';
 import { StyleSheet, View } from 'react-native';
+import { PRONUNCIATION_SCRIPT } from '../plugins/pronunciation/buildPronunciationScript';
 import {
   WebView,
   type WebViewMessageEvent,
@@ -183,7 +184,9 @@ export const OxfordWordListWebView = forwardRef<
         allowsInlineMediaPlayback
         domStorageEnabled
         javaScriptEnabled
-        injectedJavaScriptBeforeContentLoaded={buildWordListFilterScript(selectedList)}
+        injectedJavaScriptBeforeContentLoaded={
+          PRONUNCIATION_SCRIPT + buildWordListFilterScript(selectedList)
+        }
         mediaPlaybackRequiresUserAction
         onError={handleError}
         onLoadEnd={handleLoadEnd}
