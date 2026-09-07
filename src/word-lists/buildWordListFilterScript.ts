@@ -41,31 +41,64 @@ export function buildWordListFilterScript(
   return `
     (function () {
       var wordListId = '${wordListId}';
-      var items = document.querySelectorAll('li[data-hw]');
+      if (window.__oxfordWordListObserver) {
+        window.__oxfordWordListObserver.disconnect();
+      }
 
-      if (items.length === 0) {
+      function applyFilter() {
+        var items = document.querySelectorAll('li[data-hw]');
+
+        if (items.length === 0) {
+          return false;
+        }
+
+        var style = document.getElementById('${FILTER_STYLE_ID}');
+        if (!style) {
+          style = document.createElement('style');
+          style.id = '${FILTER_STYLE_ID}';
+          style.textContent = \`${FILTER_CSS}\`;
+          document.head.appendChild(style);
+        }
+
+        if (document.documentElement.dataset.oxfordViewerList !== wordListId) {
+          document.documentElement.dataset.oxfordViewerList = wordListId;
+          window.scrollTo(0, 0);
+        }
         window.ReactNativeWebView.postMessage(JSON.stringify({
-          type: 'WORD_LIST_FILTER_FAILED',
-          wordListId: wordListId,
-          reason: 'WORD_LIST_DOM_NOT_FOUND'
+          type: 'WORD_LIST_FILTER_APPLIED',
+          wordListId: wordListId
         }));
+        return true;
+      }
+
+      if (applyFilter()) {
         return;
       }
+      var observer = new MutationObserver(function () {
+        if (applyFilter()) {
+          observer.disconnect();
+          document.removeEventListener('DOMContentLoaded', checkDocument);
+        }
+      });
+      window.__oxfordWordListObserver = observer;
+      observer.observe(document, { childList: true, subtree: true });
 
-      var style = document.getElementById('${FILTER_STYLE_ID}');
-      if (!style) {
-        style = document.createElement('style');
-        style.id = '${FILTER_STYLE_ID}';
-        style.textContent = \`${FILTER_CSS}\`;
-        document.head.appendChild(style);
+      function checkDocument() {
+        if (applyFilter()) {
+          observer.disconnect();
+        } else {
+          window.ReactNativeWebView.postMessage(JSON.stringify({
+            type: 'WORD_LIST_FILTER_FAILED',
+            wordListId: wordListId,
+            reason: 'WORD_LIST_DOM_NOT_FOUND'
+          }));
+        }
       }
-
-      document.documentElement.dataset.oxfordViewerList = wordListId;
-      window.scrollTo(0, 0);
-      window.ReactNativeWebView.postMessage(JSON.stringify({
-        type: 'WORD_LIST_FILTER_APPLIED',
-        wordListId: wordListId
-      }));
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', checkDocument, { once: true });
+      } else {
+        checkDocument();
+      }
     })();
     true;
   `;

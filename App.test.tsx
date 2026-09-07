@@ -124,7 +124,7 @@ describe('App', () => {
     expect(
       screen.getByTestId('oxford-word-list-webview').props
         .injectedJavaScriptBeforeContentLoaded,
-    ).toBeUndefined();
+    ).not.toContain('viewport');
   });
 
   it('uses Oxford native definition scale in landscape', async () => {
@@ -144,7 +144,7 @@ describe('App', () => {
     expect(
       screen.getByTestId('oxford-word-list-webview').props
         .injectedJavaScriptBeforeContentLoaded,
-    ).toBeUndefined();
+    ).not.toContain('viewport');
   });
 
   it('does not render core word list switching buttons', async () => {
@@ -185,6 +185,50 @@ describe('App', () => {
     expect(mockInjectJavaScript.mock.calls[0][0]).toContain(
       "var requestedLetter = 'B';",
     );
+  });
+
+  it.each([true, false])('enables letters before loadEnd (entries initially present: %s)', async (entriesPresent) => {
+    const screen = await render(<App />);
+    const webView = screen.getByTestId('oxford-word-list-webview');
+    await fireEvent(webView, 'loadStart');
+    const { JSDOM } = require('jsdom');
+    const entry = '<ul><li data-hw="baby" data-ox3000="a1">baby</li></ul>';
+    const dom = new JSDOM(entriesPresent ? entry : '', {
+      runScripts: 'outside-only',
+    });
+    dom.window.scrollTo = jest.fn();
+    dom.window.ReactNativeWebView = {
+      postMessage: (data: string) => webView.props.onMessage({ nativeEvent: { data } }),
+    };
+    try {
+      await act(async () => {
+        dom.window.eval(webView.props.injectedJavaScriptBeforeContentLoaded || '');
+        await new Promise((resolve) => dom.window.setTimeout(resolve, 0));
+      });
+      if (!entriesPresent) {
+        expect(screen.getByRole('button', { name: 'B' })).toBeDisabled();
+        await act(async () => {
+          dom.window.document.body.innerHTML = entry;
+          await Promise.resolve();
+        });
+      }
+      const button = screen.getByRole('button', { name: 'B' });
+      expect(button).not.toBeDisabled();
+      mockInjectJavaScript.mockClear();
+      await fireEvent.press(button);
+      expect(mockInjectJavaScript).toHaveBeenCalledWith(
+        expect.stringContaining("var requestedLetter = 'B';"),
+      );
+      mockInjectJavaScript.mockClear();
+      await fireEvent(webView, 'loadEnd');
+      await act(async () => {
+        dom.window.eval(mockInjectJavaScript.mock.calls[0][0]);
+        await new Promise((resolve) => dom.window.setTimeout(resolve, 0));
+      });
+      expect(dom.window.scrollTo).toHaveBeenCalledTimes(1);
+    } finally {
+      dom.window.close();
+    }
   });
 
   it('routes a top-level definition link to the right WebView', async () => {

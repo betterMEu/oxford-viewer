@@ -58,7 +58,7 @@ describe('OxfordWordListWebView', () => {
     expect(
       screen.getByTestId('oxford-word-list-webview').props
         .injectedJavaScriptBeforeContentLoaded,
-    ).toBeUndefined();
+    ).not.toContain('viewport');
   });
 
   it('does not require a load-state callback', async () => {

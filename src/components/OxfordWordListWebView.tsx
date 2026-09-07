@@ -168,6 +168,9 @@ export const OxfordWordListWebView = forwardRef<
   const handleMessage = (event: WebViewMessageEvent) => {
     const result = parseWordListMessage(event.nativeEvent.data);
     if (result) {
+      if (result.type === 'WORD_LIST_FILTER_APPLIED') {
+        isLoadedRef.current = true;
+      }
       onFilterResult(result);
     }
   };
@@ -180,6 +183,7 @@ export const OxfordWordListWebView = forwardRef<
         allowsInlineMediaPlayback
         domStorageEnabled
         javaScriptEnabled
+        injectedJavaScriptBeforeContentLoaded={buildWordListFilterScript(selectedList)}
         mediaPlaybackRequiresUserAction
         onError={handleError}
         onLoadEnd={handleLoadEnd}
