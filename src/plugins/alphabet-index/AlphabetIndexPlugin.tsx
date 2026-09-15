@@ -34,6 +34,7 @@ export type AlphabetLetter = (typeof ALPHABET)[number];
 type AlphabetIndexPluginProps = {
   bottomInset?: number;
   disabled: boolean;
+  availableLetters?: readonly string[];
   onSelectLetter: (letter: AlphabetLetter) => void;
   topInset?: number;
 };
@@ -41,6 +42,7 @@ type AlphabetIndexPluginProps = {
 export function AlphabetIndexPlugin({
   bottomInset = 0,
   disabled,
+  availableLetters,
   onSelectLetter,
   topInset = 0,
 }: AlphabetIndexPluginProps) {
@@ -56,7 +58,7 @@ export function AlphabetIndexPlugin({
       ]}
     >
       {ALPHABET.map((letter) => {
-        const letterDisabled = disabled || letter === 'X';
+        const letterDisabled = disabled || (availableLetters ? !availableLetters.includes(letter) : letter === 'X');
 
         return (
           <Pressable

@@ -3,15 +3,15 @@ import { describe, expect, it } from '@jest/globals';
 import { buildAlphabetScrollScript } from './buildAlphabetScrollScript';
 
 describe('buildAlphabetScrollScript', () => {
-  it('targets the first visible Oxford 3000 entry for the requested letter', () => {
+  it('targets the first visible native word list entry for the requested letter', () => {
     const script = buildAlphabetScrollScript('B');
 
     expect(script).toContain("var requestedLetter = 'B';");
     expect(script).toContain(
-      "document.querySelectorAll('li[data-hw][data-ox3000]')",
+      "document.querySelectorAll('#wordlistsContentPanel li[data-hw]')",
     );
     expect(script).toContain("getAttribute('data-hw')");
-    expect(script).toContain("getComputedStyle(item).display !== 'none'");
+    expect(script).toContain("item.getClientRects().length > 0");
   });
 
   it('scrolls to the target current document position', () => {

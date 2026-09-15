@@ -1,7 +1,6 @@
 import { useRef, useState } from 'react';
 import {
   StyleSheet,
-  Text,
   useWindowDimensions,
   View,
 } from 'react-native';
@@ -21,8 +20,7 @@ import {
   AlphabetIndexPlugin,
   type AlphabetLetter,
 } from './src/plugins/alphabet-index/AlphabetIndexPlugin';
-import type { WordListWebMessage } from './src/word-lists/buildWordListFilterScript';
-import { DEFAULT_CORE_WORD_LIST } from './src/word-lists/coreWordLists';
+import type { WordListState } from './src/word-lists/buildWordListBridgeScript';
 
 const INITIAL_DEFINITION_URL =
   'https://www.oxfordlearnersdictionaries.com/definition/english/a_1';
@@ -45,7 +43,7 @@ function AppContent() {
   const [selectedDefinitionUrl, setSelectedDefinitionUrl] = useState(
     INITIAL_DEFINITION_URL,
   );
-  const [filterError, setFilterError] = useState(false);
+  const [letters, setLetters] = useState<string[]>([]);
   const [wordListReady, setWordListReady] = useState(false);
   const splitPaneWidth = Math.max(
     0,
@@ -56,14 +54,9 @@ function AppContent() {
     TOTAL_CONTENT_FLEX;
   const isPortrait = height >= width;
 
-  const handleFilterResult = (result: WordListWebMessage) => {
-    if (result.wordListId !== DEFAULT_CORE_WORD_LIST) {
-      return;
-    }
-
-    const failed = result.type === 'WORD_LIST_FILTER_FAILED';
-    setFilterError(failed);
-    setWordListReady(!failed);
+  const handleListState = (result: WordListState) => {
+    setLetters(result.letters);
+    setWordListReady(result.letters.length > 0);
   };
 
   const handleWordListLoadStateChange = (
@@ -87,22 +80,17 @@ function AppContent() {
       <StatusBar hidden style="dark" />
       <View style={styles.splitPane}>
         <View style={styles.wordPane}>
-          {filterError && (
-            <Text accessibilityRole="alert" style={styles.filterError}>
-              无法显示 Oxford 3000，Oxford 页面结构可能已变化。
-            </Text>
-          )}
           <OxfordWordListWebView
             ref={wordListWebViewRef}
             onDefinitionSelected={setSelectedDefinitionUrl}
-            onFilterResult={handleFilterResult}
+            onListState={handleListState}
             onLoadStateChange={handleWordListLoadStateChange}
-            selectedList={DEFAULT_CORE_WORD_LIST}
           />
         </View>
         <AlphabetIndexPlugin
           bottomInset={bottom}
           disabled={!wordListReady}
+          availableLetters={letters}
           onSelectLetter={handleLetterSelected}
           topInset={top}
         />
@@ -135,13 +123,6 @@ const styles = StyleSheet.create({
     borderRightColor: '#c9d1d9',
     borderRightWidth: StyleSheet.hairlineWidth,
     flex: 2,
-  },
-  filterError: {
-    backgroundColor: '#fff7ed',
-    color: '#9a3412',
-    fontSize: 12,
-    paddingHorizontal: 8,
-    paddingVertical: 6,
   },
   dictionaryPane: {
     flex: 3,

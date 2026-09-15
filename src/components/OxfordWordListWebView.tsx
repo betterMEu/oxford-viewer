@@ -1,6 +1,5 @@
 import {
   forwardRef,
-  useEffect,
   useImperativeHandle,
   useRef,
 } from 'react';
@@ -9,35 +8,17 @@ import { PRONUNCIATION_SCRIPT } from '../plugins/pronunciation/buildPronunciatio
 import {
   WebView,
   type WebViewMessageEvent,
-  type WebViewProps,
 } from 'react-native-webview';
 
-import {
-  buildWordListFilterScript,
-  type WordListWebMessage,
-} from '../word-lists/buildWordListFilterScript';
-import {
-  buildAlphabetScrollScript,
-} from '../plugins/alphabet-index/buildAlphabetScrollScript';
-import type {
-  AlphabetLetter,
-} from '../plugins/alphabet-index/AlphabetIndexPlugin';
-import {
-  CORE_WORD_LISTS,
-  OXFORD_WORD_LIST_URL,
-  type CoreWordListId,
-} from '../word-lists/coreWordLists';
-
-type WordListLoadState = 'idle' | 'loading' | 'loaded' | 'error';
-type ShouldStartLoadRequest = Parameters<
-  NonNullable<WebViewProps['onShouldStartLoadWithRequest']>
->[0];
+import { buildWordListBridgeScript, type WordListState } from '../word-lists/buildWordListBridgeScript';
+import { buildAlphabetScrollScript } from '../plugins/alphabet-index/buildAlphabetScrollScript';
+import type { AlphabetLetter } from '../plugins/alphabet-index/AlphabetIndexPlugin';
+import { OXFORD_WORD_LIST_URL } from '../word-lists/coreWordLists';
 
 type OxfordWordListWebViewProps = {
-  selectedList: CoreWordListId;
-  onLoadStateChange?: (state: WordListLoadState) => void;
+  onLoadStateChange?: (state: 'loading' | 'loaded' | 'error') => void;
   onDefinitionSelected: (url: string) => void;
-  onFilterResult: (result: WordListWebMessage) => void;
+  onListState: (state: WordListState) => void;
 };
 
 export type OxfordWordListWebViewHandle = {
@@ -47,102 +28,29 @@ export type OxfordWordListWebViewHandle = {
 const OXFORD_DEFINITION_URL_PREFIX =
   'https://www.oxfordlearnersdictionaries.com/definition/english/';
 
-function isCoreWordListId(value: unknown): value is CoreWordListId {
-  return CORE_WORD_LISTS.some(({ id }) => id === value);
-}
-
-function parseWordListMessage(data: string): WordListWebMessage | null {
-  try {
-    const parsed: unknown = JSON.parse(data);
-    if (!parsed || typeof parsed !== 'object') {
-      return null;
-    }
-
-    const message = parsed as Record<string, unknown>;
-    if (!isCoreWordListId(message.wordListId)) {
-      return null;
-    }
-
-    if (message.type === 'WORD_LIST_FILTER_APPLIED') {
-      return {
-        type: 'WORD_LIST_FILTER_APPLIED',
-        wordListId: message.wordListId,
-      };
-    }
-
-    if (
-      message.type === 'WORD_LIST_FILTER_FAILED' &&
-      message.reason === 'WORD_LIST_DOM_NOT_FOUND'
-    ) {
-      return {
-        type: 'WORD_LIST_FILTER_FAILED',
-        wordListId: message.wordListId,
-        reason: 'WORD_LIST_DOM_NOT_FOUND',
-      };
-    }
-  } catch {
-    return null;
-  }
-
-  return null;
-}
-
 export const OxfordWordListWebView = forwardRef<
   OxfordWordListWebViewHandle,
   OxfordWordListWebViewProps
 >(function OxfordWordListWebView(
   {
-    selectedList,
     onLoadStateChange,
     onDefinitionSelected,
-    onFilterResult,
+    onListState,
   },
   ref,
 ) {
   const webViewRef = useRef<WebView>(null);
   const isLoadedRef = useRef(false);
   const hasErrorRef = useRef(false);
-  const latestListRef = useRef(selectedList);
-
-  latestListRef.current = selectedList;
-
-  const injectFilter = (wordListId: CoreWordListId) => {
-    webViewRef.current?.injectJavaScript(
-      buildWordListFilterScript(wordListId),
-    );
-  };
-
   useImperativeHandle(ref, () => ({
     scrollToLetter: (letter) => {
       if (isLoadedRef.current) {
         webViewRef.current?.injectJavaScript(
-          buildAlphabetScrollScript(letter),
+          buildAlphabetScrollScript(letter, true),
         );
       }
     },
   }));
-
-  useEffect(() => {
-    if (isLoadedRef.current) {
-      injectFilter(selectedList);
-    }
-  }, [selectedList]);
-
-  const handleNavigation = (request: ShouldStartLoadRequest) => {
-    if (!request.isTopFrame) {
-      return true;
-    }
-
-    if (request.url === OXFORD_WORD_LIST_URL) {
-      return true;
-    }
-
-    if (request.url.startsWith(OXFORD_DEFINITION_URL_PREFIX)) {
-      onDefinitionSelected(request.url);
-    }
-
-    return false;
-  };
 
   const handleLoadStart = () => {
     isLoadedRef.current = false;
@@ -157,7 +65,7 @@ export const OxfordWordListWebView = forwardRef<
 
     isLoadedRef.current = true;
     onLoadStateChange?.('loaded');
-    injectFilter(latestListRef.current);
+    webViewRef.current?.injectJavaScript(buildWordListBridgeScript());
   };
 
   const handleError = () => {
@@ -167,13 +75,17 @@ export const OxfordWordListWebView = forwardRef<
   };
 
   const handleMessage = (event: WebViewMessageEvent) => {
-    const result = parseWordListMessage(event.nativeEvent.data);
-    if (result) {
-      if (result.type === 'WORD_LIST_FILTER_APPLIED') {
-        isLoadedRef.current = true;
+    try {
+      const result = JSON.parse(event.nativeEvent.data);
+      if (result.type === 'WORD_LIST_ENTRY' && typeof result.url === 'string' &&
+          result.url.startsWith(OXFORD_DEFINITION_URL_PREFIX)) {
+        onDefinitionSelected(result.url);
+      } else if (result.type === 'WORD_LIST_STATE' && Array.isArray(result.letters) &&
+          result.letters.every((letter: unknown) => typeof letter === 'string' && /^[A-Z]$/.test(letter))) {
+        isLoadedRef.current = result.letters.length > 0;
+        onListState(result);
       }
-      onFilterResult(result);
-    }
+    } catch { /* Ignore unrelated page messages. */ }
   };
 
   return (
@@ -185,14 +97,14 @@ export const OxfordWordListWebView = forwardRef<
         domStorageEnabled
         javaScriptEnabled
         injectedJavaScriptBeforeContentLoaded={
-          PRONUNCIATION_SCRIPT + buildWordListFilterScript(selectedList)
+          PRONUNCIATION_SCRIPT + buildWordListBridgeScript()
         }
         mediaPlaybackRequiresUserAction
         onError={handleError}
         onLoadEnd={handleLoadEnd}
         onLoadStart={handleLoadStart}
         onMessage={handleMessage}
-        onShouldStartLoadWithRequest={handleNavigation}
+        setSupportMultipleWindows={false}
         sharedCookiesEnabled
         source={{ uri: OXFORD_WORD_LIST_URL }}
         style={styles.webView}

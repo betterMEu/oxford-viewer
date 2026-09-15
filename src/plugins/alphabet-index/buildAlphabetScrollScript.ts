@@ -2,17 +2,18 @@ import type { AlphabetLetter } from './AlphabetIndexPlugin';
 
 export function buildAlphabetScrollScript(
   letter: AlphabetLetter,
+  scrollNestedContainers = false,
 ): string {
   return `
     (function () {
       var requestedLetter = '${letter}';
-      var items = document.querySelectorAll('li[data-hw][data-ox3000]');
+      var items = document.querySelectorAll('#wordlistsContentPanel li[data-hw]');
       var target = null;
 
       for (var index = 0; index < items.length; index += 1) {
         var item = items[index];
         var word = (item.getAttribute('data-hw') || '').trim();
-        var isVisible = getComputedStyle(item).display !== 'none';
+        var isVisible = item.getClientRects().length > 0 && getComputedStyle(item).visibility !== 'hidden';
 
         if (
           isVisible &&
@@ -27,6 +28,7 @@ export function buildAlphabetScrollScript(
         return;
       }
 
+      ${scrollNestedContainers ? "target.scrollIntoView({ block: 'start', behavior: 'instant' });" : ''}
       var targetTop =
         target.getBoundingClientRect().top + window.scrollY;
       window.scrollTo(0, targetTop);

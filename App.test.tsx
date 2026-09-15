@@ -163,110 +163,26 @@ describe('App', () => {
     ).toBeNull();
   });
 
-  it('enables the alphabet index after filtering and scrolls to a letter', async () => {
+  it('refreshes the alphabet after native list changes and navigation', async () => {
     const screen = await render(<App />);
-    const webView = screen.getByTestId('oxford-word-list-webview');
-    const bButton = screen.getByRole('button', { name: 'B' });
-
-    expect(bButton).toBeDisabled();
+    const view = screen.getByTestId('oxford-word-list-webview');
+    expect(screen.getByRole('button', { name: 'B' })).toBeDisabled();
+    await fireFilterMessage(view, { type: 'WORD_LIST_STATE', letters: ['B'] });
+    expect(screen.getByRole('button', { name: 'B' })).not.toBeDisabled();
+    await fireEvent.press(screen.getByRole('button', { name: 'B' }));
+    expect(mockInjectJavaScript).toHaveBeenCalledWith(expect.stringContaining("var requestedLetter = 'B';"));
+    await fireFilterMessage(view, { type: 'WORD_LIST_STATE', letters: ['X'] });
+    expect(screen.getByRole('button', { name: 'B' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'X' })).not.toBeDisabled();
+    await fireEvent(view, 'loadStart');
     expect(screen.getByRole('button', { name: 'X' })).toBeDisabled();
-
-    await fireEvent(webView, 'loadEnd');
-    await fireFilterMessage(webView, {
-      type: 'WORD_LIST_FILTER_APPLIED',
-      wordListId: 'ox3000',
-    });
-
-    expect(bButton).not.toBeDisabled();
-    mockInjectJavaScript.mockClear();
-    await fireEvent.press(bButton);
-
-    expect(mockInjectJavaScript).toHaveBeenCalledTimes(1);
-    expect(mockInjectJavaScript.mock.calls[0][0]).toContain(
-      "var requestedLetter = 'B';",
-    );
+    await fireFilterMessage(view, { type: 'WORD_LIST_STATE', letters: ['A'] });
+    expect(screen.getByRole('button', { name: 'A' })).not.toBeDisabled();
   });
-
-  it.each([true, false])('enables letters before loadEnd (entries initially present: %s)', async (entriesPresent) => {
+  it('opens only bridged word entries in the right pane', async () => {
     const screen = await render(<App />);
-    const webView = screen.getByTestId('oxford-word-list-webview');
-    await fireEvent(webView, 'loadStart');
-    const { JSDOM } = require('jsdom');
-    const entry = '<ul><li data-hw="baby" data-ox3000="a1">baby</li></ul>';
-    const dom = new JSDOM(entriesPresent ? entry : '', {
-      runScripts: 'outside-only',
-    });
-    dom.window.scrollTo = jest.fn();
-    dom.window.ReactNativeWebView = {
-      postMessage: (data: string) => webView.props.onMessage({ nativeEvent: { data } }),
-    };
-    try {
-      await act(async () => {
-        dom.window.eval(webView.props.injectedJavaScriptBeforeContentLoaded || '');
-        await new Promise((resolve) => dom.window.setTimeout(resolve, 0));
-      });
-      if (!entriesPresent) {
-        expect(screen.getByRole('button', { name: 'B' })).toBeDisabled();
-        await act(async () => {
-          dom.window.document.body.innerHTML = entry;
-          await Promise.resolve();
-        });
-      }
-      const button = screen.getByRole('button', { name: 'B' });
-      expect(button).not.toBeDisabled();
-      mockInjectJavaScript.mockClear();
-      await fireEvent.press(button);
-      expect(mockInjectJavaScript).toHaveBeenCalledWith(
-        expect.stringContaining("var requestedLetter = 'B';"),
-      );
-      mockInjectJavaScript.mockClear();
-      await fireEvent(webView, 'loadEnd');
-      await act(async () => {
-        dom.window.eval(mockInjectJavaScript.mock.calls[0][0]);
-        await new Promise((resolve) => dom.window.setTimeout(resolve, 0));
-      });
-      expect(dom.window.scrollTo).toHaveBeenCalledTimes(1);
-    } finally {
-      dom.window.close();
-    }
-  });
-
-  it('routes a top-level definition link to the right WebView', async () => {
-    const screen = await render(<App />);
-    const definitionUrl =
-      'https://www.oxfordlearnersdictionaries.com/definition/english/abandon_1';
-    const handleRequest = screen.getByTestId('oxford-word-list-webview')
-      .props.onShouldStartLoadWithRequest;
-
-    let shouldNavigate = true;
-    await act(() => {
-      shouldNavigate = handleRequest({
-        url: definitionUrl,
-        isTopFrame: true,
-      });
-    });
-
-    expect(shouldNavigate).toBe(false);
-    expect(screen.getByTestId('dictionary-webview')).toHaveProp('source', {
-      uri: definitionUrl,
-    });
-  });
-
-  it('reports a failure to apply the fixed Oxford 3000 filter', async () => {
-    const screen = await render(<App />);
-    const webView = screen.getByTestId('oxford-word-list-webview');
-
-    await fireEvent(webView, 'loadEnd');
-    await fireFilterMessage(webView, {
-      type: 'WORD_LIST_FILTER_FAILED',
-      wordListId: 'ox3000',
-      reason: 'WORD_LIST_DOM_NOT_FOUND',
-    });
-
-    expect(
-      screen.getByText(
-        '无法显示 Oxford 3000，Oxford 页面结构可能已变化。',
-      ),
-    ).toBeOnTheScreen();
+    const url = 'https://www.oxfordlearnersdictionaries.com/definition/english/apple';
+    await fireFilterMessage(screen.getByTestId('oxford-word-list-webview'), { type: 'WORD_LIST_ENTRY', url });
+    expect(screen.getByTestId('dictionary-webview').props.source).toEqual({ uri: url });
   });
 });
