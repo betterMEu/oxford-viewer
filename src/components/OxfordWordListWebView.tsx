@@ -8,7 +8,7 @@ import { PRONUNCIATION_SCRIPT } from '../plugins/pronunciation/buildPronunciatio
 import {
   WebView,
   type WebViewMessageEvent,
-} from 'react-native-webview';
+} from './WebView';
 
 import { buildWordListBridgeScript, type WordListState } from '../word-lists/buildWordListBridgeScript';
 import { buildAlphabetScrollScript } from '../plugins/alphabet-index/buildAlphabetScrollScript';

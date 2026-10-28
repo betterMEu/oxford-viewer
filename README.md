@@ -30,7 +30,7 @@ npm run desktop:package
 
 ## iPhone 本地使用
 
-1. 安装支持 Expo SDK 57 的 Expo Go。
+1. 安装支持 Expo SDK 58 的 Expo Go。
 2. 让 iPhone 与电脑连接同一局域网，并允许 Node.js 通过 Windows 防火墙访问专用网络。
 3. 在项目目录运行：
 

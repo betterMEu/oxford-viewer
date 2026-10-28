@@ -5,7 +5,7 @@ import {
   useState,
 } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
-import { WebView } from 'react-native-webview';
+import { WebView } from './WebView';
 import { PRONUNCIATION_SCRIPT } from '../plugins/pronunciation/buildPronunciationScript';
 import { SELECTION_LOOKUP_SCRIPT } from '../plugins/selection-lookup/buildSelectionLookupScript';
 import { EXPAND_SECTIONS_SCRIPT } from '../plugins/expand-sections/buildExpandSectionsScript';
